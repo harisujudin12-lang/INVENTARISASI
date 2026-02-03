@@ -1,0 +1,180 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// ==================== ADMIN ====================
+model Admin {
+  id           String   @id @default(cuid())
+  username     String   @unique
+  passwordHash String   @map("password_hash")
+  name         String
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  approvedRequests Request[]       @relation("ApprovedBy")
+  stockHistory     StockHistory[]
+  notifications    Notification[]
+  stockAdjustments StockAdjustment[]
+
+  @@map("admins")
+}
+
+// ==================== DIVISI ====================
+model Division {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  requests Request[]
+
+  @@map("divisions")
+}
+
+// ==================== BARANG ====================
+model Item {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  stock     Int      @default(0)
+  threshold Int      @default(10)
+  imageUrl  String?  @map("image_url")
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  requestItems    RequestItem[]
+  stockHistory    StockHistory[]
+  stockAdjustments StockAdjustment[]
+
+  @@map("items")
+}
+
+// ==================== FORM FIELD DINAMIS ====================
+model FormField {
+  id         String   @id @default(cuid())
+  fieldName  String   @unique @map("field_name")
+  fieldType  String   @map("field_type") // text, dropdown, number
+  fieldLabel String   @map("field_label")
+  options    Json? // untuk dropdown non-item [{value: "", label: ""}]
+  isRequired Boolean  @default(true) @map("is_required")
+  sortOrder  Int      @default(0) @map("sort_order")
+  isActive   Boolean  @default(true) @map("is_active")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  @@map("form_fields")
+}
+
+// ==================== REQUEST ====================
+model Request {
+  id              String        @id @default(cuid())
+  requestNumber   String        @unique @map("request_number")
+  trackingToken   String        @unique @map("tracking_token")
+  requesterName   String        @map("requester_name")
+  divisionId      String        @map("division_id")
+  status          RequestStatus @default(PENDING)
+  rejectionReason String?       @map("rejection_reason")
+  formData        Json          @map("form_data") // data dari field dinamis
+  approvedById    String?       @map("approved_by")
+  requestDate     DateTime      @default(now()) @map("request_date")
+  approvalDate    DateTime?     @map("approval_date")
+  createdAt       DateTime      @default(now()) @map("created_at")
+  updatedAt       DateTime      @updatedAt @map("updated_at")
+
+  division      Division       @relation(fields: [divisionId], references: [id])
+  approvedBy    Admin?         @relation("ApprovedBy", fields: [approvedById], references: [id])
+  requestItems  RequestItem[]
+  stockHistory  StockHistory[]
+  notifications Notification[]
+
+  @@map("requests")
+}
+
+enum RequestStatus {
+  PENDING
+  APPROVED
+  PARTIALLY_APPROVED
+  REJECTED
+}
+
+// ==================== REQUEST ITEM ====================
+model RequestItem {
+  id           String   @id @default(cuid())
+  requestId    String   @map("request_id")
+  itemId       String   @map("item_id")
+  qtyRequested Int      @map("qty_requested")
+  qtyApproved  Int?     @map("qty_approved")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  request Request @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  item    Item    @relation(fields: [itemId], references: [id])
+
+  @@map("request_items")
+}
+
+// ==================== STOCK HISTORY ====================
+model StockHistory {
+  id         String   @id @default(cuid())
+  itemId     String   @map("item_id")
+  changeType String   @map("change_type") // APPROVED, DAMAGED, RESTOCK, REDUCTION, ADJUSTMENT
+  action     String?  @default("request") // request, restock, reduction, adjustment
+  qtyChange  Int      @map("qty_change") // nilai negatif untuk pengurangan
+  notes      String?
+  requestId  String?  @map("request_id")
+  adminId    String   @map("admin_id")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  item    Item     @relation(fields: [itemId], references: [id])
+  request Request? @relation(fields: [requestId], references: [id])
+  admin   Admin    @relation(fields: [adminId], references: [id])
+
+  @@map("stock_history")
+}
+
+// ==================== NOTIFICATION ====================
+model Notification {
+  id            String   @id @default(cuid())
+  type          String // NEW_REQUEST, STATUS_CHANGED
+  title         String
+  message       String
+  requestId     String?  @map("request_id")
+  adminId       String?  @map("admin_id") // null = untuk user publik
+  trackingToken String?  @map("tracking_token") // untuk notifikasi user
+  isRead        Boolean  @default(false) @map("is_read")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  request Request? @relation(fields: [requestId], references: [id])
+  admin   Admin?   @relation(fields: [adminId], references: [id])
+
+  @@map("notifications")
+}
+
+// ==================== STOCK ADJUSTMENT (KOREKSI STOCK) ====================
+model StockAdjustment {
+  id         String   @id @default(cuid())
+  itemId     String   @map("item_id")
+  stockBefore Int     @map("stock_before")
+  stockAfter Int      @map("stock_after")
+  reason     String?  // catatan alasan koreksi
+  adminId    String   @map("admin_id")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  item  Item  @relation(fields: [itemId], references: [id])
+  admin Admin @relation(fields: [adminId], references: [id])
+
+  @@map("stock_adjustments")
+}
+
+// ==================== REQUEST COUNTER ====================
+model RequestCounter {
+  year       Int @id
+  lastNumber Int @default(0) @map("last_number")
+
+  @@map("request_counter")
+}

@@ -1,0 +1,52 @@
+import { NextResponse } from 'next/server'
+import { getCurrentAdmin } from '@/lib/auth'
+import {
+  exportStockAdjustmentToExcel,
+  exportStockAdjustmentToCSV,
+} from '@/services/historyService'
+
+export async function GET(request: Request) {
+  try {
+    const admin = await getCurrentAdmin()
+
+    if (!admin) {
+      return NextResponse.json(
+        { success: false, error: 'Tidak terautentikasi' },
+        { status: 401 }
+      )
+    }
+
+    const { searchParams } = new URL(request.url)
+    const format = searchParams.get('format') || 'xlsx'
+    const filter = {
+      startDate: searchParams.get('startDate') || undefined,
+      endDate: searchParams.get('endDate') || undefined,
+      itemId: searchParams.get('itemId') || undefined,
+    }
+
+    if (format === 'csv') {
+      const csv = await exportStockAdjustmentToCSV(filter)
+      return new NextResponse(csv, {
+        headers: {
+          'Content-Type': 'text/csv',
+          'Content-Disposition': `attachment; filename="adjustment-${Date.now()}.csv"`,
+        },
+      })
+    }
+
+    const buffer = await exportStockAdjustmentToExcel(filter)
+    return new NextResponse(buffer, {
+      headers: {
+        'Content-Type':
+          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'Content-Disposition': `attachment; filename="adjustment-${Date.now()}.xlsx"`,
+      },
+    })
+  } catch (error) {
+    console.error('Export error:', error)
+    return NextResponse.json(
+      { success: false, error: 'Terjadi kesalahan server' },
+      { status: 500 }
+    )
+  }
+}
