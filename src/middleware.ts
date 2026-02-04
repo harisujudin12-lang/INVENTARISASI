@@ -5,16 +5,24 @@ import { verifyToken } from '@/lib/auth'
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
-  // Skip auth check for login page and API routes
+  // Skip auth check for login page
   if (pathname === '/admin/login') {
     return NextResponse.next()
   }
 
-  // Protect admin routes
-  if (pathname.startsWith('/admin')) {
+  // Protect admin routes and API admin routes
+  if (pathname.startsWith('/admin') || pathname.startsWith('/api/admin')) {
     const token = request.cookies.get('admin_token')?.value
 
     if (!token) {
+      // For API routes, return 401
+      if (pathname.startsWith('/api/admin')) {
+        return NextResponse.json(
+          { success: false, error: 'Unauthorized' },
+          { status: 401 }
+        )
+      }
+      // For pages, redirect to login
       const loginUrl = new URL('/admin/login', request.url)
       loginUrl.searchParams.set('redirect', pathname)
       return NextResponse.redirect(loginUrl)
@@ -23,6 +31,14 @@ export async function middleware(request: NextRequest) {
     try {
       const payload = await verifyToken(token)
       if (!payload) {
+        // For API routes, return 401
+        if (pathname.startsWith('/api/admin')) {
+          return NextResponse.json(
+            { success: false, error: 'Unauthorized' },
+            { status: 401 }
+          )
+        }
+        // For pages, redirect to login
         const loginUrl = new URL('/admin/login', request.url)
         loginUrl.searchParams.set('redirect', pathname)
         const response = NextResponse.redirect(loginUrl)
@@ -30,6 +46,14 @@ export async function middleware(request: NextRequest) {
         return response
       }
     } catch {
+      // For API routes, return 401
+      if (pathname.startsWith('/api/admin')) {
+        return NextResponse.json(
+          { success: false, error: 'Unauthorized' },
+          { status: 401 }
+        )
+      }
+      // For pages, redirect to login
       const loginUrl = new URL('/admin/login', request.url)
       loginUrl.searchParams.set('redirect', pathname)
       const response = NextResponse.redirect(loginUrl)
@@ -42,5 +66,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/admin/:path*'],
+  matcher: ['/admin/:path*', '/api/admin/:path*'],
 }
