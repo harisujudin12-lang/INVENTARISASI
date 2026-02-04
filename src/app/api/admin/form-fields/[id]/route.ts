@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { revalidatePath, revalidateTag } from 'next/cache'
 import { getCurrentAdmin } from '@/lib/auth'
 import { updateFormField, deleteFormField } from '@/services/formService'
 
@@ -20,6 +21,13 @@ export async function PUT(
     const body = await request.json()
 
     const result = await updateFormField(id, body)
+
+    // Revalidate public form data BEFORE returning
+    await Promise.all([
+      revalidatePath('/request'),
+      revalidatePath('/track'),
+      revalidateTag('form-data'),
+    ])
 
     return NextResponse.json({
       success: true,
@@ -52,6 +60,13 @@ export async function DELETE(
 
     const { id } = await params
     await deleteFormField(id)
+
+    // Revalidate public form data BEFORE returning
+    await Promise.all([
+      revalidatePath('/request'),
+      revalidatePath('/track'),
+      revalidateTag('form-data'),
+    ])
 
     return NextResponse.json({
       success: true,

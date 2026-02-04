@@ -46,16 +46,18 @@ export async function POST(request: Request) {
 
     const result = await createFormField(body)
 
+    // Revalidate public form data BEFORE returning
+    await Promise.all([
+      revalidatePath('/request'),
+      revalidatePath('/track'),
+      revalidateTag('form-data'),
+    ])
+
     return NextResponse.json({
       success: true,
       data: result,
       message: 'Field berhasil ditambahkan',
     })
-    
-    // Revalidate public form data
-    revalidatePath('/request')
-    revalidatePath('/track')
-    revalidateTag('form-data')
   } catch (error) {
     console.error('Create form field error:', error)
     const message = error instanceof Error ? error.message : 'Terjadi kesalahan server'
