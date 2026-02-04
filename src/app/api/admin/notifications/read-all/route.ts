@@ -1,4 +1,6 @@
 import { NextResponse } from 'next/server'
+export const dynamic = 'force-dynamic'
+
 import { getCurrentAdmin } from '@/lib/auth'
 import { markAllAsRead } from '@/services/notificationService'
 
@@ -27,3 +29,4 @@ export async function PUT() {
     )
   }
 }
+

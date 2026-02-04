@@ -1,4 +1,6 @@
 import { NextResponse } from 'next/server'
+export const dynamic = 'force-dynamic'
+
 import { getCurrentAdmin } from '@/lib/auth'
 import { exportToExcel, exportToCSV } from '@/services/historyService'
 import { RequestStatus } from '@prisma/client'
@@ -49,3 +51,4 @@ export async function GET(request: Request) {
     )
   }
 }
+

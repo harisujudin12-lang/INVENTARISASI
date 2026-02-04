@@ -1,4 +1,6 @@
 import { NextResponse } from 'next/server'
+export const dynamic = 'force-dynamic'
+
 import { getCurrentAdmin } from '@/lib/auth'
 import { getRequestHistory } from '@/services/historyService'
 import * as XLSX from 'xlsx'
@@ -70,3 +72,4 @@ export async function GET() {
     )
   }
 }
+
