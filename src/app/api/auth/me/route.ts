@@ -1,20 +1,39 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import { getCurrentAdmin } from '@/lib/auth'
+import { getCurrentAdmin, getAuthToken, verifyToken } from '@/lib/auth'
 
 export const dynamic = 'force-dynamic'
 
 export async function GET(request: NextRequest) {
   try {
-    // Extract token from Authorization header
-    const authHeader = request.headers.get('Authorization')
-    const tokenFromHeader = authHeader?.replace('Bearer ', '')
+    console.log('[API /auth/me] Request received')
     
-    const admin = await getCurrentAdmin(tokenFromHeader)
+    // Try to get admin from token
+    let admin = null
     
-    console.log('[API /me] Current admin:', admin)
+    // FIRST: Try cookie (most reliable method)
+    const cookieToken = await getAuthToken()
+    console.log('[API /auth/me] Cookie token exists:', !!cookieToken)
+    
+    if (cookieToken) {
+      admin = await verifyToken(cookieToken)
+      console.log('[API /auth/me] ✅ Verified from COOKIE:', admin?.username)
+    }
+    
+    // SECOND: If no cookie, try Authorization header (from localStorage)
+    if (!admin) {
+      const authHeader = request.headers.get('Authorization')
+      const headerToken = authHeader?.replace('Bearer ', '')
+      console.log('[API /auth/me] Authorization header exists:', !!headerToken)
+      
+      if (headerToken) {
+        admin = await verifyToken(headerToken)
+        console.log('[API /auth/me] ✅ Verified from HEADER:', admin?.username)
+      }
+    }
 
     if (!admin) {
+      console.log('[API /auth/me] ❌ No valid token found')
       return NextResponse.json(
         { success: false, error: 'Tidak terautentikasi' },
         { status: 401 }
@@ -26,7 +45,7 @@ export async function GET(request: NextRequest) {
       data: admin,
     })
   } catch (error) {
-    console.error('Get me error:', error)
+    console.error('[API /auth/me] Error:', error)
     return NextResponse.json(
       { success: false, error: 'Terjadi kesalahan server' },
       { status: 500 }

@@ -31,7 +31,9 @@ export default function LoginPage() {
         // Save token to localStorage for future requests
         if (typeof window !== 'undefined') {
           localStorage.setItem('admin_token', json.data.token)
-          console.log('[Login] Token saved to localStorage')
+          console.log('[Login] ✅ Token saved to localStorage:', json.data.token.substring(0, 20) + '...')
+          console.log('[Login] ✅ Logged in as:', json.data.username)
+          console.log('[Login] ✅ Cookie also set by server')
         }
         router.push('/admin')
         router.refresh()
