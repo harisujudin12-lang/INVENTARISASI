@@ -7,6 +7,7 @@ import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableEmp
 import { formatDate } from '@/lib/utils'
 import { RequestStatus } from '@prisma/client'
 import { REQUEST_STATUS_LABELS } from '@/lib/constants'
+import { fetchWithAuth } from '@/lib/fetchClient'
 
 interface RequestData {
   id: string
