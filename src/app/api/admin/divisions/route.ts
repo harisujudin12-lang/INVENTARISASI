@@ -53,10 +53,12 @@ export async function POST(request: Request) {
 
     const result = await createDivision(body.name)
 
-    // Revalidate public form data cache
-    revalidatePath('/request')
-    revalidatePath('/track')
-    revalidateTag('form-data')
+    // Revalidate public form data cache BEFORE return
+    await Promise.all([
+      revalidatePath('/request'),
+      revalidatePath('/track'),
+      revalidateTag('form-data'),
+    ])
 
     return NextResponse.json({
       success: true,

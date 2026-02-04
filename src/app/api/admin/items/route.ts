@@ -46,10 +46,12 @@ export async function POST(request: Request) {
 
     const result = await createItem(body)
 
-    // Revalidate public form data
-    revalidatePath('/request')
-    revalidatePath('/track')
-    revalidateTag('form-data')
+    // Revalidate public form data BEFORE return
+    await Promise.all([
+      revalidatePath('/request'),
+      revalidatePath('/track'),
+      revalidateTag('form-data'),
+    ])
 
     return NextResponse.json({
       success: true,

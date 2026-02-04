@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { revalidatePath, revalidateTag } from 'next/cache'
 import { getCurrentAdmin } from '@/lib/auth'
 import { getItemById, updateItem, deleteItem } from '@/services/inventoryService'
 
@@ -58,6 +59,13 @@ export async function PUT(
 
     const result = await updateItem(id, body)
 
+    // Revalidate public form data BEFORE return
+    await Promise.all([
+      revalidatePath('/request'),
+      revalidatePath('/track'),
+      revalidateTag('form-data'),
+    ])
+
     return NextResponse.json({
       success: true,
       data: result,
@@ -89,6 +97,13 @@ export async function DELETE(
 
     const { id } = await params
     await deleteItem(id)
+
+    // Revalidate public form data BEFORE return
+    await Promise.all([
+      revalidatePath('/request'),
+      revalidatePath('/track'),
+      revalidateTag('form-data'),
+    ])
 
     return NextResponse.json({
       success: true,

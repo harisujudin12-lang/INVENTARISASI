@@ -31,10 +31,12 @@ export async function PUT(
 
     const result = await updateDivision(id, body.name)
 
-    // Revalidate public form data
-    revalidatePath('/request')
-    revalidatePath('/track')
-    revalidateTag('form-data')
+    // Revalidate public form data BEFORE return
+    await Promise.all([
+      revalidatePath('/request'),
+      revalidatePath('/track'),
+      revalidateTag('form-data'),
+    ])
 
     return NextResponse.json({
       success: true,
@@ -70,10 +72,12 @@ export async function DELETE(
     await deleteDivision(id)
     console.log('[DELETE /admin/divisions] Successfully deleted division:', id)
 
-    // Revalidate public form data
-    revalidatePath('/request')
-    revalidatePath('/track')
-    revalidateTag('form-data')
+    // Revalidate public form data BEFORE return
+    await Promise.all([
+      revalidatePath('/request'),
+      revalidatePath('/track'),
+      revalidateTag('form-data'),
+    ])
 
     return NextResponse.json({
       success: true,
