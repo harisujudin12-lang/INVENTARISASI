@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server'
 import { getCurrentAdmin } from '@/lib/auth'
 import { getAllItems, createItem } from '@/services/inventoryService'
 
+export const dynamic = 'force-dynamic'
+
 export async function GET() {
   try {
     const admin = await getCurrentAdmin()

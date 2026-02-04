@@ -3,6 +3,8 @@ import { getCurrentAdmin } from '@/lib/auth'
 import { getAllRequests } from '@/services/requestService'
 import { RequestStatus } from '@prisma/client'
 
+export const dynamic = 'force-dynamic'
+
 export async function GET(request: Request) {
   try {
     const admin = await getCurrentAdmin()

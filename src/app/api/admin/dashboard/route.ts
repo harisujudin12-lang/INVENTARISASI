@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server'
 import { getCurrentAdmin } from '@/lib/auth'
 import { getDashboardData } from '@/services/dashboardService'
 
+export const dynamic = 'force-dynamic'
+
 export async function GET() {
   try {
     const admin = await getCurrentAdmin()
