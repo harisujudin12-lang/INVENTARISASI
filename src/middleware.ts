@@ -5,8 +5,8 @@ import { verifyToken } from '@/lib/auth'
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
-  // Skip auth check for login page
-  if (pathname === '/admin/login') {
+  // Skip auth check for login page and auth API routes
+  if (pathname === '/admin/login' || pathname.startsWith('/api/auth')) {
     return NextResponse.next()
   }
 
