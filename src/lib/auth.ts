@@ -53,7 +53,13 @@ export async function getAuthToken(): Promise<string | undefined> {
 }
 
 export async function getCurrentAdmin(): Promise<AdminPayload | null> {
+  // Try cookie first (server-side)
   const token = await getAuthToken()
-  if (!token) return null
-  return verifyToken(token)
+  if (token) {
+    return verifyToken(token)
+  }
+  
+  // Note: Authorization header from requests cannot be accessed in server functions
+  // Must use cookies or pass token explicitly
+  return null
 }

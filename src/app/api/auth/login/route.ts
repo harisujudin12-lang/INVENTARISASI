@@ -45,7 +45,7 @@ export async function POST(request: Request) {
 
     await setAuthCookie(token)
     
-    console.log('[API /login] Token created and cookie set for:', admin.username)
+    console.log('[API /login] Token created for:', admin.username)
 
     return NextResponse.json({
       success: true,
@@ -53,6 +53,7 @@ export async function POST(request: Request) {
         id: admin.id,
         username: admin.username,
         name: admin.name,
+        token: token, // Return token untuk localStorage
       },
     })
   } catch (error) {

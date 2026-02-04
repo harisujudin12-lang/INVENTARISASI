@@ -28,6 +28,11 @@ export default function LoginPage() {
       const json = await res.json()
 
       if (json.success) {
+        // Save token to localStorage for future requests
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('admin_token', json.data.token)
+          console.log('[Login] Token saved to localStorage')
+        }
         router.push('/admin')
         router.refresh()
       } else {

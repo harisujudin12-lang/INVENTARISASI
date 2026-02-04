@@ -10,10 +10,21 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next()
   }
 
+  // Check for Authorization header (from localStorage)
+  const authHeader = request.headers.get('Authorization')
+  const tokenFromHeader = authHeader?.replace('Bearer ', '')
+
+  // Check for cookie token
+  let token = request.cookies.get('admin_token')?.value
+
+  // Use header token if available (takes precedence)
+  if (tokenFromHeader) {
+    token = tokenFromHeader
+    console.log('[Middleware] Using token from Authorization header')
+  }
+
   // Protect admin routes and API admin routes
   if (pathname.startsWith('/admin') || pathname.startsWith('/api/admin')) {
-    const token = request.cookies.get('admin_token')?.value
-
     if (!token) {
       // For API routes, return 401
       if (pathname.startsWith('/api/admin')) {
@@ -45,9 +56,24 @@ export async function middleware(request: NextRequest) {
         response.cookies.delete('admin_token')
         return response
       }
-    } catch {
+    } catch (error) {
+      console.error('[Middleware] Token verification error:', error)
       // For API routes, return 401
       if (pathname.startsWith('/api/admin')) {
+        return NextResponse.json(
+          { success: false, error: 'Unauthorized' },
+          { status: 401 }
+        )
+      }
+      // For pages, redirect to login
+      const loginUrl = new URL('/admin/login', request.url)
+      loginUrl.searchParams.set('redirect', pathname)
+      return NextResponse.redirect(loginUrl)
+    }
+  }
+
+  return NextResponse.next()
+}
         return NextResponse.json(
           { success: false, error: 'Unauthorized' },
           { status: 401 }
