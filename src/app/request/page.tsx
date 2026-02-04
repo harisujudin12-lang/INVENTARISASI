@@ -54,17 +54,23 @@ export default function RequestPage() {
   useEffect(() => {
     fetchFormData()
     
-    // Setup polling untuk check divisi/items updates setiap 30 detik
+    // Setup polling untuk check divisi/items updates setiap 5 detik (real-time)
     const pollInterval = setInterval(() => {
       fetchFormData()
-    }, 30000)
+    }, 5000)
 
     return () => clearInterval(pollInterval)
   }, [])
 
   async function fetchFormData() {
     try {
-      const res = await fetch('/api/public/form')
+      // Add timestamp untuk force fresh fetch, skip cache
+      const res = await fetch(`/api/public/form?t=${Date.now()}`, {
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache',
+        },
+      })
       const json = await res.json()
       if (json.success) {
         setFields(json.data.fields)
