@@ -61,7 +61,9 @@ export async function DELETE(
     }
 
     const { id } = await params
+    console.log('[DELETE /admin/divisions] Deleting division:', id)
     await deleteDivision(id)
+    console.log('[DELETE /admin/divisions] Successfully deleted division:', id)
 
     // Revalidate form data cache so divisions update in public form
     revalidateTag('form-data')
@@ -71,11 +73,12 @@ export async function DELETE(
       message: 'Divisi berhasil dihapus',
     })
   } catch (error) {
-    console.error('Delete division error:', error)
+    console.error('[DELETE /admin/divisions] Error:', error)
     const message = error instanceof Error ? error.message : 'Terjadi kesalahan server'
     return NextResponse.json(
       { success: false, error: message },
       { status: 400 }
     )
   }
+}
 }
