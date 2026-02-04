@@ -169,8 +169,42 @@ export default function RequestPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <LoadingSpinner size="lg" />
+      <div className="min-h-screen bg-gray-50">
+        {/* Header */}
+        <header className="bg-white border-b sticky top-0 z-10">
+          <div className="max-w-md mx-auto px-4 py-4">
+            <div className="h-6 w-32 bg-gray-300 rounded animate-pulse"></div>
+          </div>
+        </header>
+
+        {/* Form Skeleton */}
+        <form className="max-w-md mx-auto px-4 py-6 space-y-6">
+          {/* Date field skeleton */}
+          <div className="space-y-2">
+            <div className="h-5 w-24 bg-gray-300 rounded animate-pulse"></div>
+            <div className="h-10 bg-gray-200 rounded-lg animate-pulse"></div>
+          </div>
+
+          {/* Dynamic fields skeleton */}
+          {[1, 2].map((i) => (
+            <div key={i} className="space-y-2">
+              <div className="h-5 w-20 bg-gray-300 rounded animate-pulse"></div>
+              <div className="h-10 bg-gray-200 rounded-lg animate-pulse"></div>
+            </div>
+          ))}
+
+          {/* Items section skeleton */}
+          <div className="pt-4 border-t space-y-4">
+            <div className="h-5 w-24 bg-gray-300 rounded animate-pulse"></div>
+            <div className="h-10 bg-gray-200 rounded-lg animate-pulse"></div>
+            <div className="h-12 bg-gray-200 rounded-lg animate-pulse"></div>
+          </div>
+
+          {/* Submit button skeleton */}
+          <div className="pt-4 pb-8">
+            <div className="h-12 bg-gray-300 rounded-lg animate-pulse"></div>
+          </div>
+        </form>
       </div>
     )
   }
