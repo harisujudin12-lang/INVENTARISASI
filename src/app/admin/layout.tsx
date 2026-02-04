@@ -62,8 +62,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [notificationCount, setNotificationCount] = useState(0)
 
   useEffect(() => {
-    checkAuth()
-    fetchNotifications()
+    // Wait 500ms untuk localStorage fully ready
+    const timer = setTimeout(() => {
+      checkAuth()
+      fetchNotifications()
+    }, 500)
+    
+    return () => clearTimeout(timer)
   }, [])
 
   async function checkAuth() {
