@@ -43,7 +43,7 @@ export default function RequestsPage() {
       params.set('page', page.toString())
       if (statusFilter) params.set('status', statusFilter)
 
-      const res = await fetch(`/api/admin/requests?${params}`)
+      const res = await fetchWithAuth(`/api/admin/requests?${params}`)
       const json = await res.json()
       if (json.success) {
         setData(json.data)

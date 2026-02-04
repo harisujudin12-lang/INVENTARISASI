@@ -2,8 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { Card, Button, Input, Select, Modal, LoadingSpinner, Toast } from '@/components/ui'
-import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableEmpty } from '@/components/ui'
-
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableEmpty } from '@/components/ui'import { fetchWithAuth } from '@/lib/fetchClient'
 interface FormField {
   id: string
   fieldName: string
@@ -45,7 +44,7 @@ export default function FormBuilderPage() {
 
   async function fetchFields() {
     try {
-      const res = await fetch('/api/admin/form-fields')
+      const res = await fetchWithAuth('/api/admin/form-fields')
       const json = await res.json()
       if (json.success) {
         setFields(json.data)
@@ -100,7 +99,7 @@ export default function FormBuilderPage() {
         }
       }
 
-      const res = await fetch('/api/admin/form-fields', {
+      const res = await fetchWithAuth('/api/admin/form-fields', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
@@ -147,7 +146,7 @@ export default function FormBuilderPage() {
         }
       }
 
-      const res = await fetch(`/api/admin/form-fields/${selectedField.id}`, {
+      const res = await fetchWithAuth(`/api/admin/form-fields/${selectedField.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
@@ -175,7 +174,7 @@ export default function FormBuilderPage() {
     if (!confirm(`Apakah Anda yakin ingin menghapus field "${field.fieldLabel}"?`)) return
 
     try {
-      const res = await fetch(`/api/admin/form-fields/${field.id}`, {
+      const res = await fetchWithAuth(`/api/admin/form-fields/${field.id}`, {
         method: 'DELETE',
       })
 

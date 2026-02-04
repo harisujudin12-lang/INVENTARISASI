@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { Card, Button, Input, Modal, LoadingSpinner, Toast } from '@/components/ui'
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableEmpty } from '@/components/ui'
+import { fetchWithAuth } from '@/lib/fetchClient'
 
 interface Division {
   id: string
@@ -31,7 +32,7 @@ export default function DivisionsPage() {
 
   async function fetchDivisions() {
     try {
-      const res = await fetch('/api/admin/divisions')
+      const res = await fetchWithAuth('/api/admin/divisions')
       const json = await res.json()
       if (json.success) {
         setDivisions(json.data)
@@ -57,7 +58,7 @@ export default function DivisionsPage() {
 
     setProcessing(true)
     try {
-      const res = await fetch('/api/admin/divisions', {
+      const res = await fetchWithAuth('/api/admin/divisions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: formName }),
@@ -86,7 +87,7 @@ export default function DivisionsPage() {
 
     setProcessing(true)
     try {
-      const res = await fetch(`/api/admin/divisions/${selectedDivision.id}`, {
+      const res = await fetchWithAuth(`/api/admin/divisions/${selectedDivision.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -117,7 +118,7 @@ export default function DivisionsPage() {
     if (!confirm(`Apakah Anda yakin ingin menghapus divisi "${division.name}"?`)) return
 
     try {
-      const res = await fetch(`/api/admin/divisions/${division.id}`, {
+      const res = await fetchWithAuth(`/api/admin/divisions/${division.id}`, {
         method: 'DELETE',
       })
 

@@ -118,7 +118,7 @@ export default function HistoryPage() {
       if (requestStartDate) params.set('startDate', requestStartDate)
       if (requestEndDate) params.set('endDate', requestEndDate)
 
-      const res = await fetch(`/api/admin/history/requests?${params}`)
+      const res = await fetchWithAuth(`/api/admin/history/requests?${params}`)
       const json = await res.json()
 
       if (json.success) {
@@ -135,7 +135,7 @@ export default function HistoryPage() {
   async function exportRequestHistory() {
     setExporting(true)
     try {
-      const res = await fetch('/api/admin/history/requests/export')
+      const res = await fetchWithAuth('/api/admin/history/requests/export')
       if (!res.ok) throw new Error('Export failed')
       const blob = await res.blob()
       const url = window.URL.createObjectURL(blob)
@@ -159,7 +159,7 @@ export default function HistoryPage() {
   async function fetchRestockHistory() {
     setRestockLoading(true)
     try {
-      const res = await fetch(`/api/admin/history/restock?page=${restockPage}&limit=20`)
+      const res = await fetchWithAuth(`/api/admin/history/restock?page=${restockPage}&limit=20`)
       const json = await res.json()
 
       if (json.success) {
@@ -176,7 +176,7 @@ export default function HistoryPage() {
   async function exportRestockHistory() {
     setExporting(true)
     try {
-      const res = await fetch('/api/admin/history/restock/export')
+      const res = await fetchWithAuth('/api/admin/history/restock/export')
       if (!res.ok) throw new Error('Export failed')
       const blob = await res.blob()
       const url = window.URL.createObjectURL(blob)
@@ -200,7 +200,7 @@ export default function HistoryPage() {
   async function fetchAdjustmentHistory() {
     setAdjustmentLoading(true)
     try {
-      const res = await fetch(`/api/admin/history/adjustments?page=${adjustmentPage}&limit=20`)
+      const res = await fetchWithAuth(`/api/admin/history/adjustments?page=${adjustmentPage}&limit=20`)
       const json = await res.json()
 
       if (json.success) {
@@ -217,7 +217,7 @@ export default function HistoryPage() {
   async function exportAdjustmentHistory() {
     setExporting(true)
     try {
-      const res = await fetch('/api/admin/history/adjustments/export')
+      const res = await fetchWithAuth('/api/admin/history/adjustments/export')
       if (!res.ok) throw new Error('Export failed')
       const blob = await res.blob()
       const url = window.URL.createObjectURL(blob)
@@ -258,7 +258,7 @@ export default function HistoryPage() {
       if (filterStartDate) params.set('startDate', filterStartDate)
       if (filterEndDate) params.set('endDate', filterEndDate)
 
-      const res = await fetch(`/api/admin/history/export-restock-reduction?${params}`)
+      const res = await fetchWithAuth(`/api/admin/history/export-restock-reduction?${params}`)
 
       if (res.ok) {
         const blob = await res.blob()
@@ -289,7 +289,7 @@ export default function HistoryPage() {
       if (filterStartDate) params.set('startDate', filterStartDate)
       if (filterEndDate) params.set('endDate', filterEndDate)
 
-      const res = await fetch(`/api/admin/history/export-adjustment?${params}`)
+      const res = await fetchWithAuth(`/api/admin/history/export-adjustment?${params}`)
 
       if (res.ok) {
         const blob = await res.blob()

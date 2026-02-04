@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { Card, CardHeader, Button, Input, Modal, LoadingSpinner, Toast, Badge } from '@/components/ui'
 import Image from 'next/image'
+import { fetchWithAuth } from '@/lib/fetchClient'
 
 interface ItemWithStatus {
   id: string
@@ -62,7 +63,7 @@ export default function InventoryPage() {
 
   async function fetchAdminId() {
     try {
-      const res = await fetch('/api/auth/me')
+      const res = await fetchWithAuth('/api/auth/me')
       const json = await res.json()
       if (json.data?.id) {
         setAdminId(json.data.id)
@@ -74,7 +75,7 @@ export default function InventoryPage() {
 
   async function fetchItems() {
     try {
-      const res = await fetch('/api/admin/items')
+      const res = await fetchWithAuth('/api/admin/items')
       const json = await res.json()
       if (json.success) {
         setItems(json.data)
@@ -130,7 +131,7 @@ export default function InventoryPage() {
 
     setProcessing(true)
     try {
-      const res = await fetch('/api/admin/items', {
+      const res = await fetchWithAuth('/api/admin/items', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -147,7 +148,7 @@ export default function InventoryPage() {
         if (formImage) {
           const formData = new FormData()
           formData.append('file', formImage)
-          await fetch(`/api/admin/items/${json.data.id}/upload-image`, {
+          await fetchWithAuth(`/api/admin/items/${json.data.id}/upload-image`, {
             method: 'POST',
             body: formData,
           })
@@ -173,7 +174,7 @@ export default function InventoryPage() {
 
     setProcessing(true)
     try {
-      const res = await fetch(`/api/admin/items/${selectedItem.id}`, {
+      const res = await fetchWithAuth(`/api/admin/items/${selectedItem.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -189,7 +190,7 @@ export default function InventoryPage() {
         if (formImage) {
           const formData = new FormData()
           formData.append('file', formImage)
-          await fetch(`/api/admin/items/${selectedItem.id}/upload-image`, {
+          await fetchWithAuth(`/api/admin/items/${selectedItem.id}/upload-image`, {
             method: 'POST',
             body: formData,
           })
@@ -223,7 +224,7 @@ export default function InventoryPage() {
 
     setProcessing(true)
     try {
-      const res = await fetch(`/api/admin/items/${selectedItem.id}/stock-action`, {
+      const res = await fetchWithAuth(`/api/admin/items/${selectedItem.id}/stock-action`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -265,7 +266,7 @@ export default function InventoryPage() {
 
     setProcessing(true)
     try {
-      const res = await fetch(`/api/admin/items/${selectedItem.id}/stock-action`, {
+      const res = await fetchWithAuth(`/api/admin/items/${selectedItem.id}/stock-action`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -302,7 +303,7 @@ export default function InventoryPage() {
 
     setProcessing(true)
     try {
-      const res = await fetch(`/api/admin/items/${selectedItem.id}/stock-action`, {
+      const res = await fetchWithAuth(`/api/admin/items/${selectedItem.id}/stock-action`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -333,7 +334,7 @@ export default function InventoryPage() {
 
   async function handleExport(format: 'excel' | 'csv') {
     try {
-      const res = await fetch(`/api/admin/items/export?format=${format}`)
+      const res = await fetchWithAuth(`/api/admin/items/export?format=${format}`)
       const blob = await res.blob()
       const url = window.URL.createObjectURL(blob)
       const a = document.createElement('a')
@@ -684,7 +685,7 @@ export default function InventoryPage() {
                 try {
                   const formData = new FormData()
                   formData.append('file', formImage)
-                  const res = await fetch(`/api/admin/items/${selectedItem.id}/upload-image`, {
+                  const res = await fetchWithAuth(`/api/admin/items/${selectedItem.id}/upload-image`, {
                     method: 'POST',
                     body: formData,
                   })
