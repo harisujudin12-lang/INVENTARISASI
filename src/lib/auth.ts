@@ -20,9 +20,11 @@ export async function createToken(payload: AdminPayload): Promise<string> {
 export async function verifyToken(token: string): Promise<AdminPayload | null> {
   try {
     const { payload } = await jwtVerify(token, JWT_SECRET)
+    console.log('[Auth] ✅ Token verified successfully for:', (payload as any).username)
     return payload as unknown as AdminPayload
   } catch (error) {
-    console.error('[Auth] Token verification failed:', error)
+    const errorMsg = error instanceof Error ? error.message : String(error)
+    console.error('[Auth] ❌ Token verification FAILED:', errorMsg)
     return null
   }
 }
