@@ -10,17 +10,23 @@ export async function GET() {
       {
         success: true,
         data,
+        timestamp: new Date().toISOString(),
       },
       {
         headers: {
-          'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0',
+          'Cache-Control': 'no-cache, no-store, must-revalidate, proxy-revalidate, max-age=0',
           'Pragma': 'no-cache',
           'Expires': '0',
+          'Surrogate-Control': 'no-store',
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'GET',
+          'Access-Control-Allow-Headers': 'Content-Type',
         },
       }
     )
   } catch (error) {
-    console.error('Get form error:', error)
+    console.error('[API /public/form] Error:', error)
     return NextResponse.json(
       { success: false, error: 'Terjadi kesalahan server' },
       { status: 500 }

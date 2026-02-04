@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { Button, Input, Select, Card, Toast, LoadingSpinner } from '@/components/ui'
 import { MAX_ITEMS_PER_REQUEST } from '@/lib/constants'
 
@@ -51,34 +51,57 @@ export default function RequestPage() {
   const [searchQueries, setSearchQueries] = useState<Record<number, string>>({})
   const [openDropdowns, setOpenDropdowns] = useState<Record<number, boolean>>({})
 
-  useEffect(() => {
-    fetchFormData()
-    
-    // Setup polling untuk check divisi/items updates setiap 5 detik (real-time)
-    const pollInterval = setInterval(() => {
-      fetchFormData()
-    }, 5000)
+  const pollIntervalRef = useRef<NodeJS.Timeout | null>(null)
+  const lastDivisionsCountRef = useRef<number>(0)
 
-    return () => clearInterval(pollInterval)
-  }, [])
-
-  async function fetchFormData() {
+  // Memoized fetch function to prevent unnecessary recreations
+  const fetchFormData = useCallback(async () => {
     try {
+      console.log('[Form] Fetching divisions data...')
       const res = await fetch(`/api/public/form?t=${Date.now()}`, {
         cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0',
+        },
       })
       const json = await res.json()
       if (json.success) {
-        setFields(json.data.fields)
-        setDivisions(json.data.divisions)
-        setItems(json.data.items)
+        const newDivisionsCount = json.data.divisions?.length || 0
+        console.log(`[Form] Fetched: ${newDivisionsCount} divisions (was: ${lastDivisionsCountRef.current})`)
+        
+        // Force state updates even if data looks same
+        setFields([...json.data.fields])
+        setDivisions([...json.data.divisions])
+        setItems([...json.data.items])
+        
+        lastDivisionsCountRef.current = newDivisionsCount
       }
     } catch (error) {
-      console.error('Error fetching form data:', error)
+      console.error('[Form] Error fetching data:', error)
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
+
+  useEffect(() => {
+    // Initial fetch
+    fetchFormData()
+
+    // Setup polling - re-fetch every 3 seconds
+    pollIntervalRef.current = setInterval(() => {
+      console.log('[Form] Polling...')
+      fetchFormData()
+    }, 3000)
+
+    // Cleanup
+    return () => {
+      if (pollIntervalRef.current) {
+        clearInterval(pollIntervalRef.current)
+      }
+    }
+  }, [fetchFormData])
 
   function handleFieldChange(fieldName: string, value: string) {
     setFormData((prev) => ({ ...prev, [fieldName]: value }))
