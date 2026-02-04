@@ -68,14 +68,19 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   async function checkAuth() {
     try {
-      const res = await fetch('/api/auth/me')
+      console.log('[Layout] Checking auth...')
+      const res = await fetchWithAuth('/api/auth/me')
+      console.log('[Layout] Auth response:', res.status)
       const json = await res.json()
       if (json.success) {
+        console.log('[Layout] Auth OK - user:', json.data.username)
         setAdmin(json.data)
       } else {
+        console.log('[Layout] Auth failed - redirecting to login')
         router.push('/admin/login')
       }
-    } catch {
+    } catch (error) {
+      console.error('[Layout] Auth error:', error)
       router.push('/admin/login')
     }
   }
