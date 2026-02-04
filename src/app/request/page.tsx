@@ -3,6 +3,13 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { Button, Input, Select, Card, Toast, LoadingSpinner } from '@/components/ui'
 import { MAX_ITEMS_PER_REQUEST } from '@/lib/constants'
+import { createClient } from '@supabase/supabase-js'
+
+// Initialize Supabase client for realtime
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL || '',
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
+)
 
 interface FormField {
   id: string
@@ -52,6 +59,7 @@ export default function RequestPage() {
   const [openDropdowns, setOpenDropdowns] = useState<Record<number, boolean>>({})
 
   const pollIntervalRef = useRef<NodeJS.Timeout | null>(null)
+  const realtimeSubscriptionRef = useRef<any>(null)
   const lastDivisionsCountRef = useRef<number>(0)
   const fetchCountRef = useRef<number>(0)
 
@@ -62,9 +70,9 @@ export default function RequestPage() {
     const timestamp = Date.now()
     
     try {
-      console.log(`[${fetchId}] 🔄 FETCH START - ${new Date().toLocaleTimeString()}`)
+      console.log(`[${fetchId}] 🔄 FETCH START`)
       
-      // AGGRESSIVE cache busting - multiple random params
+      // AGGRESSIVE cache busting
       const randomId = Math.random().toString(36).substring(7)
       const url = `/api/public/form?t=${timestamp}&v=${randomId}&r=${Math.random()}`
       
@@ -86,23 +94,20 @@ export default function RequestPage() {
       }
       
       const json = await res.json()
-      console.log(`[${fetchId}] ✅ RESPONSE - divisions: ${json.data?.divisions?.length}`)
+      console.log(`[${fetchId}] ✅ Got divisions: ${json.data?.divisions?.length}`)
       
       if (json.success && json.data?.divisions) {
         const newDivisionsCount = json.data.divisions.length
         const oldCount = lastDivisionsCountRef.current
         
-        console.log(`[${fetchId}] 📊 COUNT: old=${oldCount} new=${newDivisionsCount}`)
-        
         if (newDivisionsCount !== oldCount) {
-          console.log(`[${fetchId}] 🎉 CHANGE DETECTED!`)
-          console.log(`[${fetchId}] Divisions: ${json.data.divisions.map((d: any) => d.name).join(', ')}`)
+          console.log(`[${fetchId}] 🎉 DIVISIONS CHANGED: ${oldCount} → ${newDivisionsCount}`)
+          console.log(`[${fetchId}] Names: ${json.data.divisions.map((d: any) => d.name).join(', ')}`)
         }
         
-        // CRITICAL: Create completely new object references to force re-render
+        // Create new references to force re-render
         const newDivisions = json.data.divisions.map((d: any) => ({ id: d.id, name: d.name }))
         
-        console.log(`[${fetchId}] 🔄 UPDATING STATE...`)
         setDivisions(newDivisions)
         setFields(json.data.fields || [])
         setItems(json.data.items || [])
@@ -118,21 +123,54 @@ export default function RequestPage() {
   }, [])
 
   useEffect(() => {
-    console.log('[Form] 🚀 COMPONENT MOUNTED - starting data fetch')
-    // Initial fetch immediately
+    console.log('[Form] 🚀 COMPONENT MOUNTED')
+    
+    // Initial fetch
     fetchFormData()
 
-    // Setup polling - re-fetch EVERY 2 SECONDS for real-time updates
-    pollIntervalRef.current = setInterval(() => {
-      console.log(`[Form] ⏰ POLLING - ${new Date().toLocaleTimeString()}`)
-      fetchFormData()
-    }, 2000)
+    // Setup Supabase realtime listener for divisions changes
+    console.log('[Form] 📡 Setting up Supabase realtime...')
+    const setupRealtime = async () => {
+      try {
+        const subscription = supabase
+          .channel('divisions-realtime')
+          .on(
+            'postgres_changes',
+            {
+              event: '*', // Listen to INSERT, UPDATE, DELETE
+              schema: 'public',
+              table: 'divisions',
+            },
+            (payload) => {
+              console.log('[Realtime] 🔔 Division change detected:', payload.eventType)
+              // Re-fetch when divisions change
+              fetchFormData()
+            }
+          )
+          .subscribe((status) => {
+            console.log('[Realtime] Status:', status)
+          })
 
-    // Cleanup on unmount
+        realtimeSubscriptionRef.current = subscription
+      } catch (error) {
+        console.error('[Realtime] Setup error:', error)
+      }
+    }
+
+    setupRealtime()
+
+    // Setup polling as fallback every 5 seconds
+    pollIntervalRef.current = setInterval(() => {
+      fetchFormData()
+    }, 5000)
+
+    // Cleanup
     return () => {
       if (pollIntervalRef.current) {
         clearInterval(pollIntervalRef.current)
-        console.log('[Form] 🛑 POLLING STOPPED')
+      }
+      if (realtimeSubscriptionRef.current) {
+        realtimeSubscriptionRef.current.unsubscribe()
       }
     }
   }, [fetchFormData])
@@ -348,9 +386,21 @@ export default function RequestPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="bg-white border-b sticky top-0 z-10">
-        <div className="max-w-md mx-auto px-4 py-4">
+      <header className="bg-white border-b sticky top-0 z-10 shadow-sm">
+        <div className="max-w-md mx-auto px-4 py-4 flex items-center justify-between">
           <h1 className="text-lg font-bold text-gray-900">Request Barang</h1>
+          <button
+            onClick={() => {
+              console.log('[User] Manual refresh clicked')
+              fetchFormData()
+            }}
+            className="p-2 hover:bg-gray-100 rounded-lg transition"
+            title="Refresh data"
+          >
+            <svg className="w-5 h-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+          </button>
         </div>
       </header>
 
