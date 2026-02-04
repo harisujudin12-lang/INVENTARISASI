@@ -1,11 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { promises as fs } from 'fs';
-import path from 'path';
+import { createClient } from '@supabase/supabase-js';
 import { prisma } from '@/lib/prisma';
 
-const UPLOAD_DIR = path.join(process.cwd(), 'public/images/items');
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 const MAX_SIZE = 5 * 1024 * 1024; // 5MB
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL || '',
+  process.env.SUPABASE_SERVICE_ROLE_KEY || ''
+);
 
 export async function POST(
   request: NextRequest,
@@ -59,21 +62,37 @@ export async function POST(
     const ext = file.type === 'image/jpeg' ? 'jpg' : 
                 file.type === 'image/png' ? 'png' : 'webp';
     const filename = `${params.id}-${Date.now()}.${ext}`;
-    const filepath = path.join(UPLOAD_DIR, filename);
 
-    // Save file
-    await fs.writeFile(filepath, buffer);
+    // Upload to Supabase Storage
+    const { data, error: uploadError } = await supabase.storage
+      .from('items')
+      .upload(filename, buffer, {
+        contentType: file.type,
+        upsert: false,
+      });
+
+    if (uploadError) {
+      console.error('Supabase upload error:', uploadError);
+      return NextResponse.json(
+        { error: 'Upload to storage failed' },
+        { status: 500 }
+      );
+    }
+
+    // Get public URL
+    const { data: { publicUrl } } = supabase.storage
+      .from('items')
+      .getPublicUrl(filename);
 
     // Update item with image URL
-    const imageUrl = `/images/items/${filename}`;
     const updated = await prisma.item.update({
       where: { id: params.id },
-      data: { imageUrl }
+      data: { imageUrl: publicUrl }
     });
 
     return NextResponse.json({
       success: true,
-      imageUrl,
+      imageUrl: publicUrl,
       item: updated
     });
   } catch (error) {
