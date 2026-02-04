@@ -290,35 +290,35 @@ export default function RequestPage() {
 
       {/* Form */}
       <form onSubmit={handleSubmit} className="max-w-md mx-auto px-4 py-6 space-y-6">
+        {/* Requester Name - Always show */}
+        <Input
+          id="requester_name"
+          label="Nama Lengkap"
+          required
+          value={formData['requester_name'] || ''}
+          onChange={(e) => handleFieldChange('requester_name', e.target.value)}
+          placeholder="Masukkan nama lengkap"
+        />
+
+        {/* Division - Always show */}
+        <Select
+          id="division_id"
+          label="Divisi"
+          required
+          value={formData['division_id'] || ''}
+          onChange={(e) => handleFieldChange('division_id', e.target.value)}
+          placeholder="Pilih divisi"
+          options={divisions.map((d) => ({ value: d.id, label: d.name }))}
+        />
+
         {/* Dynamic Fields */}
         {fields.map((field) => {
           if (field.fieldName === 'requester_name') {
-            return (
-              <Input
-                key={field.id}
-                id={field.fieldName}
-                label={field.fieldLabel}
-                required={field.isRequired}
-                value={formData[field.fieldName] || ''}
-                onChange={(e) => handleFieldChange(field.fieldName, e.target.value)}
-                placeholder="Masukkan nama lengkap"
-              />
-            )
+            return null
           }
 
           if (field.fieldName === 'division_id') {
-            return (
-              <Select
-                key={field.id}
-                id={field.fieldName}
-                label={field.fieldLabel}
-                required={field.isRequired}
-                value={formData[field.fieldName] || ''}
-                onChange={(e) => handleFieldChange(field.fieldName, e.target.value)}
-                placeholder="Pilih divisi"
-                options={divisions.map((d) => ({ value: d.id, label: d.name }))}
-              />
-            )
+            return null
           }
 
           if (field.fieldType === 'text') {
