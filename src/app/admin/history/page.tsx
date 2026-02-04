@@ -5,6 +5,7 @@ import { Card, Button, Select, LoadingSpinner, Toast } from '@/components/ui'
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableEmpty } from '@/components/ui'
 import { formatDate, formatDateTime } from '@/lib/utils'
 import { REQUEST_STATUS_LABELS } from '@/lib/constants'
+import { fetchWithAuth } from '@/lib/fetchClient'
 
 // ==================== INTERFACES ====================
 interface RequestHistoryRecord {
