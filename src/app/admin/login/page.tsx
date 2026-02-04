@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button, Input, Card, Toast } from '@/components/ui'
+import { fetchWithAuth } from '@/lib/fetchClient'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -16,9 +17,8 @@ export default function LoginPage() {
     setLoading(true)
 
     try {
-      const res = await fetch('/api/auth/login', {
+      const res = await fetchWithAuth('/api/auth/login', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password }),
       })
 

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { cn } from '@/lib/utils'
+import { fetchWithAuth } from '@/lib/fetchClient'
 
 interface AdminPayload {
   id: string
@@ -81,7 +82,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   async function fetchNotifications() {
     try {
-      const res = await fetch('/api/admin/notifications')
+      const res = await fetchWithAuth('/api/admin/notifications')
       const json = await res.json()
       if (json.success) {
         setNotificationCount(json.data.unreadCount)

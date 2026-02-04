@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { Card, CardHeader, LoadingSpinner, StatusBadge, StockBadge } from '@/components/ui'
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableEmpty } from '@/components/ui'
 import { formatDate } from '@/lib/utils'
+import { fetchWithAuth } from '@/lib/fetchClient'
 import { RequestStatus } from '@prisma/client'
 
 interface ItemWithStatus {
@@ -21,6 +22,7 @@ interface RequestData {
   requesterName: string
   divisionName: string
   status: RequestStatus
+  
   requestDate: string
 }
 
@@ -42,7 +44,7 @@ export default function DashboardPage() {
 
   async function fetchDashboard() {
     try {
-      const res = await fetch('/api/admin/dashboard')
+      const res = await fetchWithAuth('/api/admin/dashboard')
       const json = await res.json()
       if (json.success) {
         setData(json.data)
