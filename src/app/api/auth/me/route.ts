@@ -1,11 +1,16 @@
 import { NextResponse } from 'next/server'
+import type { NextRequest } from 'next/server'
 import { getCurrentAdmin } from '@/lib/auth'
 
 export const dynamic = 'force-dynamic'
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    const admin = await getCurrentAdmin()
+    // Extract token from Authorization header
+    const authHeader = request.headers.get('Authorization')
+    const tokenFromHeader = authHeader?.replace('Bearer ', '')
+    
+    const admin = await getCurrentAdmin(tokenFromHeader)
     
     console.log('[API /me] Current admin:', admin)
 

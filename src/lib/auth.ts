@@ -52,14 +52,17 @@ export async function getAuthToken(): Promise<string | undefined> {
   return cookieStore.get(COOKIE_NAME)?.value
 }
 
-export async function getCurrentAdmin(): Promise<AdminPayload | null> {
-  // Try cookie first (server-side)
-  const token = await getAuthToken()
+export async function getCurrentAdmin(token?: string): Promise<AdminPayload | null> {
+  // If token provided (from request header), use that
   if (token) {
     return verifyToken(token)
   }
   
-  // Note: Authorization header from requests cannot be accessed in server functions
-  // Must use cookies or pass token explicitly
+  // Otherwise try cookie (server-side)
+  const cookieToken = await getAuthToken()
+  if (cookieToken) {
+    return verifyToken(cookieToken)
+  }
+  
   return null
 }
