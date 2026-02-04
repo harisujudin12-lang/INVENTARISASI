@@ -42,6 +42,8 @@ export async function POST(request: Request) {
     })
 
     await setAuthCookie(token)
+    
+    console.log('[API /login] Token created and cookie set for:', admin.username)
 
     return NextResponse.json({
       success: true,

@@ -4,6 +4,8 @@ import { getCurrentAdmin } from '@/lib/auth'
 export async function GET() {
   try {
     const admin = await getCurrentAdmin()
+    
+    console.log('[API /me] Current admin:', admin)
 
     if (!admin) {
       return NextResponse.json(
