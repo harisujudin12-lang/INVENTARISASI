@@ -37,6 +37,7 @@ interface DashboardData {
 export default function DashboardPage() {
   const [data, setData] = useState<DashboardData | null>(null)
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     fetchDashboard()
@@ -44,13 +45,21 @@ export default function DashboardPage() {
 
   async function fetchDashboard() {
     try {
+      console.log('[Dashboard] Fetching data...')
       const res = await fetchWithAuth('/api/admin/dashboard')
+      console.log('[Dashboard] Response status:', res.status)
+      
       const json = await res.json()
+      console.log('[Dashboard] Response:', json)
+      
       if (json.success) {
         setData(json.data)
+      } else {
+        setError(json.error || 'Gagal memuat data')
       }
     } catch (error) {
-      console.error('Fetch dashboard error:', error)
+      console.error('[Dashboard] Error:', error)
+      setError('Terjadi kesalahan: ' + String(error))
     } finally {
       setLoading(false)
     }
@@ -64,10 +73,25 @@ export default function DashboardPage() {
     )
   }
 
+  if (error) {
+    return (
+      <div className="text-center py-12 text-red-500">
+        Error: {error}
+        <button onClick={() => {
+          setLoading(true)
+          setError(null)
+          fetchDashboard()
+        }} className="ml-4 px-4 py-2 bg-blue-500 text-white rounded">
+          Retry
+        </button>
+      </div>
+    )
+  }
+
   if (!data) {
     return (
       <div className="text-center py-12 text-gray-500">
-        Gagal memuat data
+        Tidak ada data
       </div>
     )
   }
