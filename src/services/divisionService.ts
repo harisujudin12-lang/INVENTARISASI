@@ -75,10 +75,9 @@ export async function deleteDivision(id: string) {
     throw new Error('Tidak dapat menghapus divisi yang masih ada request pending')
   }
 
-  // Soft delete
-  await prisma.division.update({
+  // Hard delete - remove from database completely
+  await prisma.division.delete({
     where: { id },
-    data: { isActive: false },
   })
 
   return { success: true }
