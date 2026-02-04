@@ -4,6 +4,7 @@ import { getPublicFormData } from '@/services/requestService'
 export async function GET() {
   try {
     const data = await getPublicFormData()
+    console.log(`[API /public/form] Returning ${data.divisions.length} divisions`)
 
     return NextResponse.json(
       {

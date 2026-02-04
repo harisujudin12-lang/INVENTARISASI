@@ -64,16 +64,10 @@ export default function RequestPage() {
 
   async function fetchFormData() {
     try {
-      // Add timestamp untuk force fresh fetch, skip cache
-      console.log('[Form] Fetching fresh form data...')
       const res = await fetch(`/api/public/form?t=${Date.now()}`, {
         cache: 'no-store',
-        headers: {
-          'Cache-Control': 'no-cache',
-        },
       })
       const json = await res.json()
-      console.log('[Form] Fetched:', json.data?.divisions?.length, 'divisions')
       if (json.success) {
         setFields(json.data.fields)
         setDivisions(json.data.divisions)
