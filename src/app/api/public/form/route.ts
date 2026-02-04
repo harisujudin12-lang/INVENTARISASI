@@ -1,8 +1,6 @@
 import { NextResponse } from 'next/server'
 import { getPublicFormData } from '@/services/requestService'
 
-export const revalidate = 3600 // Cache untuk 1 jam
-
 export async function GET() {
   try {
     const data = await getPublicFormData()
@@ -14,7 +12,8 @@ export async function GET() {
       },
       {
         headers: {
-          'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=86400',
+          'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600',
+          'X-Cache-Tag': 'form-data',
         },
       }
     )

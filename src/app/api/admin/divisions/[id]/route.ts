@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server'
+import { revalidateTag } from 'next/cache'
 import { getCurrentAdmin } from '@/lib/auth'
 import { updateDivision, deleteDivision } from '@/services/divisionService'
+
+export const dynamic = 'force-dynamic'
 
 export async function PUT(
   request: Request,
@@ -59,6 +62,9 @@ export async function DELETE(
 
     const { id } = await params
     await deleteDivision(id)
+
+    // Revalidate form data cache so divisions update in public form
+    revalidateTag('form-data')
 
     return NextResponse.json({
       success: true,
