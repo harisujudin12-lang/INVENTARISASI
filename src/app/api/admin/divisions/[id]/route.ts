@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { revalidateTag } from 'next/cache'
+import { revalidatePath, revalidateTag } from 'next/cache'
 import { getCurrentAdmin } from '@/lib/auth'
 import { updateDivision, deleteDivision } from '@/services/divisionService'
 
@@ -30,6 +30,11 @@ export async function PUT(
     }
 
     const result = await updateDivision(id, body.name)
+
+    // Revalidate public form data
+    revalidatePath('/request')
+    revalidatePath('/track')
+    revalidateTag('form-data')
 
     return NextResponse.json({
       success: true,
@@ -65,7 +70,9 @@ export async function DELETE(
     await deleteDivision(id)
     console.log('[DELETE /admin/divisions] Successfully deleted division:', id)
 
-    // Revalidate form data cache so divisions update in public form
+    // Revalidate public form data
+    revalidatePath('/request')
+    revalidatePath('/track')
     revalidateTag('form-data')
 
     return NextResponse.json({

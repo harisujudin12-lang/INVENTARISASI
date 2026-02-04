@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { revalidatePath, revalidateTag } from 'next/cache'
 import { getCurrentAdmin } from '@/lib/auth'
 import { getAllItems, createItem } from '@/services/inventoryService'
 
@@ -44,6 +45,11 @@ export async function POST(request: Request) {
     const body = await request.json()
 
     const result = await createItem(body)
+
+    // Revalidate public form data
+    revalidatePath('/request')
+    revalidatePath('/track')
+    revalidateTag('form-data')
 
     return NextResponse.json({
       success: true,

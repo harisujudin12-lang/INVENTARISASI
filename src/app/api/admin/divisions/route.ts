@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { revalidatePath, revalidateTag } from 'next/cache'
 import { getCurrentAdmin } from '@/lib/auth'
 import { getAllDivisions, createDivision } from '@/services/divisionService'
 
@@ -51,6 +52,11 @@ export async function POST(request: Request) {
     }
 
     const result = await createDivision(body.name)
+
+    // Revalidate public form data cache
+    revalidatePath('/request')
+    revalidatePath('/track')
+    revalidateTag('form-data')
 
     return NextResponse.json({
       success: true,

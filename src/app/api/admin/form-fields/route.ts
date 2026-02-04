@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { revalidatePath, revalidateTag } from 'next/cache'
 import { getCurrentAdmin } from '@/lib/auth'
 import { getAllFormFields, createFormField } from '@/services/formService'
 
@@ -50,6 +51,11 @@ export async function POST(request: Request) {
       data: result,
       message: 'Field berhasil ditambahkan',
     })
+    
+    // Revalidate public form data
+    revalidatePath('/request')
+    revalidatePath('/track')
+    revalidateTag('form-data')
   } catch (error) {
     console.error('Create form field error:', error)
     const message = error instanceof Error ? error.message : 'Terjadi kesalahan server'
