@@ -74,22 +74,6 @@ export async function middleware(request: NextRequest) {
 
   return NextResponse.next()
 }
-        return NextResponse.json(
-          { success: false, error: 'Unauthorized' },
-          { status: 401 }
-        )
-      }
-      // For pages, redirect to login
-      const loginUrl = new URL('/admin/login', request.url)
-      loginUrl.searchParams.set('redirect', pathname)
-      const response = NextResponse.redirect(loginUrl)
-      response.cookies.delete('admin_token')
-      return response
-    }
-  }
-
-  return NextResponse.next()
-}
 
 export const config = {
   matcher: ['/admin/:path*', '/api/admin/:path*'],
