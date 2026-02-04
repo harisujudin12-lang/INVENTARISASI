@@ -53,6 +53,13 @@ export default function RequestPage() {
 
   useEffect(() => {
     fetchFormData()
+    
+    // Setup polling untuk check divisi/items updates setiap 30 detik
+    const pollInterval = setInterval(() => {
+      fetchFormData()
+    }, 30000)
+
+    return () => clearInterval(pollInterval)
   }, [])
 
   async function fetchFormData() {
