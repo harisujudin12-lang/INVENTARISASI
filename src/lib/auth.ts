@@ -2,9 +2,9 @@ import { SignJWT, jwtVerify } from 'jose'
 import { cookies } from 'next/headers'
 import { AdminPayload } from '@/types'
 
-// CRITICAL: Use environment variable, don't have default!
+// HARDCODED for production - CHANGE THIS LATER
 const JWT_SECRET = new TextEncoder().encode(
-  process.env.JWT_SECRET || 'CHANGE-THIS-SECRET-KEY-IN-PRODUCTION'
+  process.env.JWT_SECRET || 'inventaris-hardcoded-secret-key-2025-xyz'
 )
 
 const COOKIE_NAME = 'admin_token'
