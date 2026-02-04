@@ -57,46 +57,70 @@ export default function RequestPage() {
   // Memoized fetch function to prevent unnecessary recreations
   const fetchFormData = useCallback(async () => {
     try {
-      console.log('[Form] Fetching divisions data...')
-      const res = await fetch(`/api/public/form?t=${Date.now()}`, {
+      const timestamp = Date.now()
+      const noCacheParam = `t=${timestamp}&v=${Math.random()}`
+      console.log(`[Form] 🔄 FETCH START - timestamp: ${timestamp}`)
+      
+      const res = await fetch(`/api/public/form?${noCacheParam}`, {
+        method: 'GET',
         cache: 'no-store',
         headers: {
           'Cache-Control': 'no-cache, no-store, must-revalidate',
           'Pragma': 'no-cache',
           'Expires': '0',
+          'X-Requested-With': 'XMLHttpRequest',
+          'X-Timestamp': String(timestamp),
         },
       })
+      
       const json = await res.json()
+      console.log(`[Form] ✅ FETCH RESPONSE - divisions: ${json.data?.divisions?.length || 0}, items: ${json.data?.items?.length || 0}`)
+      
       if (json.success) {
         const newDivisionsCount = json.data.divisions?.length || 0
-        console.log(`[Form] Fetched: ${newDivisionsCount} divisions (was: ${lastDivisionsCountRef.current})`)
+        const oldCount = lastDivisionsCountRef.current
         
-        // Force state updates even if data looks same
-        setFields([...json.data.fields])
-        setDivisions([...json.data.divisions])
-        setItems([...json.data.items])
+        console.log(`[Form] 📊 DIVISIONS - old: ${oldCount}, new: ${newDivisionsCount}`)
+        
+        if (newDivisionsCount !== oldCount) {
+          console.log(`[Form] 🚨 COUNT CHANGED! Divisions: ${json.data.divisions.map((d: any) => d.name).join(', ')}`)
+        }
+        
+        // Force re-render by creating new array references
+        const newFields = JSON.parse(JSON.stringify(json.data.fields))
+        const newDivisions = JSON.parse(JSON.stringify(json.data.divisions))
+        const newItems = JSON.parse(JSON.stringify(json.data.items))
+        
+        setFields(newFields)
+        setDivisions(newDivisions)
+        setItems(newItems)
         
         lastDivisionsCountRef.current = newDivisionsCount
+        console.log(`[Form] ✨ STATE UPDATED`)
       }
     } catch (error) {
-      console.error('[Form] Error fetching data:', error)
+      console.error('[Form] ❌ ERROR:', error)
     } finally {
       setLoading(false)
     }
   }, [])
 
   useEffect(() => {
+    console.log('[Form] 🚀 COMPONENT MOUNTED')
     // Initial fetch
     fetchFormData()
 
-    // Setup polling - re-fetch every 3 seconds
+    // Setup polling - re-fetch every 2 seconds for FAST updates
     pollIntervalRef.current = setInterval(() => {
-      console.log('[Form] Polling...')
+      console.log(`[Form] ⏰ POLLING TICK (${new Date().toLocaleTimeString()})`)
       fetchFormData()
-    }, 3000)
+    }, 2000)
+
+    console.log('[Form] ⏱️ POLLING STARTED - every 2 seconds')
 
     // Cleanup
     return () => {
+      console.log('[Form] 🛑 COMPONENT UNMOUNTING - clearing interval')
       if (pollIntervalRef.current) {
         clearInterval(pollIntervalRef.current)
       }

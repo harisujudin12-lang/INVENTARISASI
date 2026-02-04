@@ -12,22 +12,31 @@ import { MAX_ITEMS_PER_REQUEST, NOTIFICATION_TYPES, STOCK_CHANGE_TYPES } from '@
 
 // ==================== GET FORM DATA FOR PUBLIC ====================
 export async function getPublicFormData() {
-  const [fields, divisions, items] = await Promise.all([
-    prisma.formField.findMany({
-      where: { isActive: true },
-      orderBy: { sortOrder: 'asc' },
-    }),
-    prisma.division.findMany({
-      where: { isActive: true },
-      orderBy: { name: 'asc' },
-    }),
-    prisma.item.findMany({
-      where: { isActive: true, stock: { gt: 0 } },
-      orderBy: { name: 'asc' },
-    }),
-  ])
+  try {
+    console.log('[Service] getPublicFormData - START')
+    const [fields, divisions, items] = await Promise.all([
+      prisma.formField.findMany({
+        where: { isActive: true },
+        orderBy: { sortOrder: 'asc' },
+      }),
+      prisma.division.findMany({
+        where: { isActive: true },
+        orderBy: { name: 'asc' },
+      }),
+      prisma.item.findMany({
+        where: { isActive: true, stock: { gt: 0 } },
+        orderBy: { name: 'asc' },
+      }),
+    ])
 
-  return { fields, divisions, items }
+    console.log(`[Service] getPublicFormData - RESULT: ${divisions.length} divisions, ${items.length} items`)
+    console.log(`[Service] Divisions: ${divisions.map(d => d.name).join(', ')}`)
+
+    return { fields, divisions, items }
+  } catch (error) {
+    console.error('[Service] getPublicFormData - ERROR:', error)
+    throw error
+  }
 }
 
 // ==================== CREATE REQUEST ====================
