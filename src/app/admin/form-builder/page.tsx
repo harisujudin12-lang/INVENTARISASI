@@ -2,7 +2,9 @@
 
 import { useState, useEffect } from 'react'
 import { Card, Button, Input, Select, Modal, LoadingSpinner, Toast } from '@/components/ui'
-import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableEmpty } from '@/components/ui'import { fetchWithAuth } from '@/lib/fetchClient'
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableEmpty } from '@/components/ui'
+import { fetchWithAuth } from '@/lib/fetchClient'
+
 interface FormField {
   id: string
   fieldName: string
