@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server'
 import { getRequestByToken, updateRequest, getNotificationsByToken } from '@/services/requestService'
 
+export const dynamic = 'force-dynamic'
+
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ token: string }> }

@@ -3,13 +3,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { Button, Input, Select, Card, Toast, LoadingSpinner } from '@/components/ui'
 import { MAX_ITEMS_PER_REQUEST } from '@/lib/constants'
-import { createClient } from '@supabase/supabase-js'
-
-// Initialize Supabase client for realtime
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL || '',
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
-)
 
 interface FormField {
   id: string
@@ -59,118 +52,45 @@ export default function RequestPage() {
   const [openDropdowns, setOpenDropdowns] = useState<Record<number, boolean>>({})
 
   const pollIntervalRef = useRef<NodeJS.Timeout | null>(null)
-  const realtimeSubscriptionRef = useRef<any>(null)
-  const lastDivisionsCountRef = useRef<number>(0)
-  const fetchCountRef = useRef<number>(0)
 
-  // Memoized fetch function to prevent unnecessary recreations
+  // Fetch form data dari API (selalu fresh karena API sudah force-dynamic)
   const fetchFormData = useCallback(async () => {
-    fetchCountRef.current++
-    const fetchId = fetchCountRef.current
-    const timestamp = Date.now()
-    
     try {
-      console.log(`[${fetchId}] 🔄 FETCH START`)
-      
-      // AGGRESSIVE cache busting
-      const randomId = Math.random().toString(36).substring(7)
-      const url = `/api/public/form?t=${timestamp}&v=${randomId}&r=${Math.random()}`
-      
-      const res = await fetch(url, {
-        method: 'GET',
+      const res = await fetch(`/api/public/form?t=${Date.now()}`, {
         cache: 'no-store',
         headers: {
-          'Cache-Control': 'no-cache, no-store, must-revalidate, proxy-revalidate, max-age=0',
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
           'Pragma': 'no-cache',
-          'Expires': '0',
-          'X-Timestamp': String(timestamp),
-          'X-Fetch-ID': String(fetchId),
         },
       })
       
-      if (!res.ok) {
-        console.error(`[${fetchId}] ❌ HTTP ${res.status}`)
-        return
-      }
+      if (!res.ok) return
       
       const json = await res.json()
-      console.log(`[${fetchId}] ✅ Got divisions: ${json.data?.divisions?.length}`)
       
-      if (json.success && json.data?.divisions) {
-        const newDivisionsCount = json.data.divisions.length
-        const oldCount = lastDivisionsCountRef.current
-        
-        if (newDivisionsCount !== oldCount) {
-          console.log(`[${fetchId}] 🎉 DIVISIONS CHANGED: ${oldCount} → ${newDivisionsCount}`)
-          console.log(`[${fetchId}] Names: ${json.data.divisions.map((d: any) => d.name).join(', ')}`)
-        }
-        
-        // Create new references to force re-render
-        const newDivisions = json.data.divisions.map((d: any) => ({ id: d.id, name: d.name }))
-        
-        setDivisions(newDivisions)
+      if (json.success && json.data) {
+        setDivisions(json.data.divisions.map((d: any) => ({ id: d.id, name: d.name })))
         setFields(json.data.fields || [])
         setItems(json.data.items || [])
-        
-        lastDivisionsCountRef.current = newDivisionsCount
-        console.log(`[${fetchId}] ✨ STATE UPDATED`)
       }
     } catch (error) {
-      console.error(`[${fetchId}] ❌ ERROR:`, error)
+      console.error('Fetch form data error:', error)
     } finally {
       setLoading(false)
     }
   }, [])
 
   useEffect(() => {
-    console.log('[Form] 🚀 COMPONENT MOUNTED')
-    
     // Initial fetch
     fetchFormData()
 
-    // Setup Supabase realtime listener for divisions changes
-    console.log('[Form] 📡 Setting up Supabase realtime...')
-    const setupRealtime = async () => {
-      try {
-        const subscription = supabase
-          .channel('divisions-realtime')
-          .on(
-            'postgres_changes',
-            {
-              event: '*', // Listen to INSERT, UPDATE, DELETE
-              schema: 'public',
-              table: 'divisions',
-            },
-            (payload) => {
-              console.log('[Realtime] 🔔 Division change detected:', payload.eventType)
-              // Re-fetch when divisions change
-              fetchFormData()
-            }
-          )
-          .subscribe((status) => {
-            console.log('[Realtime] Status:', status)
-          })
-
-        realtimeSubscriptionRef.current = subscription
-      } catch (error) {
-        console.error('[Realtime] Setup error:', error)
-      }
-    }
-
-    setupRealtime()
-
-    // Setup polling as fallback every 5 seconds
-    pollIntervalRef.current = setInterval(() => {
-      fetchFormData()
-    }, 5000)
+    // Polling setiap 10 detik untuk sinkronisasi data dari admin
+    pollIntervalRef.current = setInterval(fetchFormData, 10000)
 
     // Cleanup
     return () => {
       if (pollIntervalRef.current) {
         clearInterval(pollIntervalRef.current)
-      }
-      if (realtimeSubscriptionRef.current) {
-        realtimeSubscriptionRef.current.unsubscribe()
       }
     }
   }, [fetchFormData])
