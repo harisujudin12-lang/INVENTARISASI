@@ -178,3 +178,12 @@ model RequestCounter {
 
   @@map("request_counter")
 }
+
+// ==================== SETTINGS ====================
+model Setting {
+  key       String   @id
+  value     String
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+
+  @@map("settings")
+}

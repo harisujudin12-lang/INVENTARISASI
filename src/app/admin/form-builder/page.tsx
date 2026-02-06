@@ -31,6 +31,14 @@ export default function FormBuilderPage() {
   const [processing, setProcessing] = useState(false)
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null)
 
+  // Form title state
+  const [formTitle, setFormTitle] = useState('Request Barang')
+  const [formDescription, setFormDescription] = useState('')
+  const [editingTitle, setEditingTitle] = useState(false)
+  const [savingTitle, setSavingTitle] = useState(false)
+  const [tempTitle, setTempTitle] = useState('')
+  const [tempDescription, setTempDescription] = useState('')
+
   // Form state
   const [formFieldName, setFormFieldName] = useState('')
   const [formFieldLabel, setFormFieldLabel] = useState('')
@@ -42,7 +50,61 @@ export default function FormBuilderPage() {
 
   useEffect(() => {
     fetchFields()
+    fetchSettings()
   }, [])
+
+  async function fetchSettings() {
+    try {
+      const res = await fetchWithAuth('/api/admin/settings')
+      const json = await res.json()
+      if (json.success && json.data) {
+        setFormTitle(json.data.form_title || 'Request Barang')
+        setFormDescription(json.data.form_description || '')
+      }
+    } catch (error) {
+      console.error('Fetch settings error:', error)
+    }
+  }
+
+  function openTitleEdit() {
+    setTempTitle(formTitle)
+    setTempDescription(formDescription)
+    setEditingTitle(true)
+  }
+
+  async function saveTitle() {
+    if (!tempTitle.trim()) {
+      setToast({ message: 'Judul form tidak boleh kosong', type: 'error' })
+      return
+    }
+
+    setSavingTitle(true)
+    try {
+      const res = await fetchWithAuth('/api/admin/settings', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          form_title: tempTitle.trim(),
+          form_description: tempDescription.trim(),
+        }),
+      })
+
+      const json = await res.json()
+      if (json.success) {
+        setFormTitle(tempTitle.trim())
+        setFormDescription(tempDescription.trim())
+        setEditingTitle(false)
+        setToast({ message: 'Judul form berhasil diperbarui', type: 'success' })
+      } else {
+        setToast({ message: json.error || 'Gagal menyimpan', type: 'error' })
+      }
+    } catch (error) {
+      console.error('Save title error:', error)
+      setToast({ message: 'Terjadi kesalahan', type: 'error' })
+    } finally {
+      setSavingTitle(false)
+    }
+  }
 
   async function fetchFields() {
     try {
@@ -231,6 +293,54 @@ export default function FormBuilderPage() {
         </div>
         <Button onClick={openAddModal}>+ Tambah Field</Button>
       </div>
+
+      {/* Form Title Setting */}
+      <Card>
+        <CardHeader title="Pengaturan Judul Form" />
+        <div className="px-4 pb-4">
+          {editingTitle ? (
+            <div className="space-y-3">
+              <Input
+                label="Judul Form"
+                value={tempTitle}
+                onChange={(e) => setTempTitle(e.target.value)}
+                placeholder="Masukkan judul form"
+              />
+              <Input
+                label="Deskripsi (opsional)"
+                value={tempDescription}
+                onChange={(e) => setTempDescription(e.target.value)}
+                placeholder="Masukkan deskripsi singkat"
+              />
+              <div className="flex gap-2">
+                <Button size="sm" onClick={saveTitle} isLoading={savingTitle}>
+                  Simpan
+                </Button>
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  onClick={() => setEditingTitle(false)}
+                >
+                  Batal
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-sm text-gray-600">Judul yang tampil di halaman request:</p>
+                <p className="text-lg font-semibold text-gray-900 mt-1">{formTitle}</p>
+                {formDescription && (
+                  <p className="text-sm text-gray-500 mt-0.5">{formDescription}</p>
+                )}
+              </div>
+              <Button size="sm" variant="ghost" onClick={openTitleEdit}>
+                Ubah
+              </Button>
+            </div>
+          )}
+        </div>
+      </Card>
 
       {/* Default Fields Info */}
       <Card>

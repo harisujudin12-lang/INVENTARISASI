@@ -47,6 +47,9 @@ export default function RequestPage() {
   ])
   const [trackingUrl, setTrackingUrl] = useState<string | null>(null)
   
+  // Form title
+  const [formTitle, setFormTitle] = useState('Request Barang')
+
   // Autocomplete state per item
   const [searchQueries, setSearchQueries] = useState<Record<number, string>>({})
   const [openDropdowns, setOpenDropdowns] = useState<Record<number, boolean>>({})
@@ -72,6 +75,9 @@ export default function RequestPage() {
         setDivisions(json.data.divisions.map((d: any) => ({ id: d.id, name: d.name })))
         setFields(json.data.fields || [])
         setItems(json.data.items || [])
+        if (json.data.formTitle) {
+          setFormTitle(json.data.formTitle)
+        }
       }
     } catch (error) {
       console.error('Fetch form data error:', error)
@@ -308,7 +314,7 @@ export default function RequestPage() {
       {/* Header */}
       <header className="bg-white border-b sticky top-0 z-10 shadow-sm">
         <div className="max-w-md mx-auto px-4 py-4 flex items-center justify-between">
-          <h1 className="text-lg font-bold text-gray-900">Request Barang</h1>
+          <h1 className="text-lg font-bold text-gray-900">{formTitle}</h1>
           <button
             onClick={() => {
               console.log('[User] Manual refresh clicked')

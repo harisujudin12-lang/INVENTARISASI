@@ -9,12 +9,13 @@ import {
 } from '@/types'
 import { generateRequestNumber } from '@/lib/utils'
 import { MAX_ITEMS_PER_REQUEST, NOTIFICATION_TYPES, STOCK_CHANGE_TYPES } from '@/lib/constants'
+import { getSettings } from '@/services/settingService'
 
 // ==================== GET FORM DATA FOR PUBLIC ====================
 export async function getPublicFormData() {
   try {
     console.log('[Service] getPublicFormData - START')
-    const [fields, divisions, items] = await Promise.all([
+    const [fields, divisions, items, settings] = await Promise.all([
       prisma.formField.findMany({
         where: { isActive: true },
         orderBy: { sortOrder: 'asc' },
@@ -27,12 +28,19 @@ export async function getPublicFormData() {
         where: { isActive: true, stock: { gt: 0 } },
         orderBy: { name: 'asc' },
       }),
+      getSettings(['form_title', 'form_description']),
     ])
 
     console.log(`[Service] getPublicFormData - RESULT: ${divisions.length} divisions, ${items.length} items`)
     console.log(`[Service] Divisions: ${divisions.map(d => d.name).join(', ')}`)
 
-    return { fields, divisions, items }
+    return {
+      fields,
+      divisions,
+      items,
+      formTitle: settings.form_title || 'Request Barang',
+      formDescription: settings.form_description || '',
+    }
   } catch (error) {
     console.error('[Service] getPublicFormData - ERROR:', error)
     throw error
