@@ -66,8 +66,9 @@ export async function PUT(request: NextRequest) {
     })
   } catch (error) {
     console.error('Update settings error:', error)
+    const message = error instanceof Error ? error.message : 'Terjadi kesalahan server'
     return NextResponse.json(
-      { success: false, error: 'Terjadi kesalahan server' },
+      { success: false, error: message },
       { status: 500 }
     )
   }
