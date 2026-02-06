@@ -89,7 +89,7 @@ export async function POST(
     }
 
     // Create history and update stock
-    const [history, updated] = await prisma.$transaction([
+    const transactionOps: any[] = [
       prisma.stockHistory.create({
         data: {
           itemId,
@@ -104,11 +104,28 @@ export async function POST(
         where: { id: itemId },
         data: { stock: newStock },
       }),
-    ])
+    ]
+
+    // Also save to StockAdjustment table for adjustment actions
+    if (action === 'adjustment') {
+      transactionOps.push(
+        prisma.stockAdjustment.create({
+          data: {
+            itemId,
+            stockBefore: item.stock,
+            stockAfter: newStock,
+            reason,
+            adminId: admin.id,
+          },
+        })
+      )
+    }
+
+    const results = await prisma.$transaction(transactionOps)
 
     return NextResponse.json({
       success: true,
-      data: { history, item: updated },
+      data: { history: results[0], item: results[1] },
       message: `${action.charAt(0).toUpperCase() + action.slice(1)} berhasil tercatat`,
     })
   } catch (error) {
