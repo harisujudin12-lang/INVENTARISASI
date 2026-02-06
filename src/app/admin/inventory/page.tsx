@@ -53,7 +53,7 @@ export default function InventoryPage() {
   const [showImageModal, setShowImageModal] = useState(false)
 
   // Modal form state
-  const [modalQuantity, setModalQuantity] = useState(0)
+  const [modalQuantity, setModalQuantity] = useState('')
   const [modalReason, setModalReason] = useState('')
 
   useEffect(() => {
@@ -93,7 +93,7 @@ export default function InventoryPage() {
     setFormImage(null)
     setImagePreview('')
     setSelectedItem(null)
-    setModalQuantity(0)
+    setModalQuantity('')
     setModalReason('')
   }
 
@@ -217,7 +217,8 @@ export default function InventoryPage() {
       return
     }
 
-    if (modalQuantity <= 0) {
+    const qty = parseInt(modalQuantity)
+    if (!qty || qty <= 0) {
       setToast({ message: 'Jumlah restock harus lebih dari 0', type: 'error' })
       return
     }
@@ -229,7 +230,7 @@ export default function InventoryPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           action: 'restock',
-          quantity: modalQuantity,
+          quantity: qty,
           reason: modalReason,
           adminId,
         }),
@@ -259,7 +260,8 @@ export default function InventoryPage() {
       return
     }
 
-    if (modalQuantity <= 0) {
+    const qty = parseInt(modalQuantity)
+    if (!qty || qty <= 0) {
       setToast({ message: 'Jumlah pengurangan harus lebih dari 0', type: 'error' })
       return
     }
@@ -271,7 +273,7 @@ export default function InventoryPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           action: 'reduction',
-          quantity: -modalQuantity,
+          quantity: -qty,
           reason: modalReason,
           adminId,
         }),
@@ -308,7 +310,7 @@ export default function InventoryPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           action: 'adjustment',
-          quantity: modalQuantity,
+          quantity: parseInt(modalQuantity) || 0,
           reason: modalReason,
           adminId,
         }),
@@ -351,14 +353,14 @@ export default function InventoryPage() {
   function openRestockModal(item: ItemWithStatus) {
     setSelectedItem(item)
     setRestockModal({ show: true, itemId: item.id })
-    setModalQuantity(0)
+    setModalQuantity('')
     setModalReason('')
   }
 
   function openReductionModal(item: ItemWithStatus) {
     setSelectedItem(item)
     setReductionModal({ show: true, itemId: item.id })
-    setModalQuantity(0)
+    setModalQuantity('')
     setModalReason('')
   }
 
@@ -372,7 +374,7 @@ export default function InventoryPage() {
   function openAdjustmentModal(item: ItemWithStatus) {
     setSelectedItem(item)
     setAdjustmentModal({ show: true, itemId: item.id })
-    setModalQuantity(item.stock)
+    setModalQuantity(String(item.stock))
     setModalReason('')
   }
 
@@ -785,8 +787,8 @@ export default function InventoryPage() {
                 label="Jumlah Restock"
                 type="number"
                 min={1}
-                value={modalQuantity || ''}
-                onChange={(e) => setModalQuantity(parseInt(e.target.value) || 0)}
+                value={modalQuantity}
+                onChange={(e) => setModalQuantity(e.target.value)}
                 placeholder="Berapa yang di-restock?"
               />
 
@@ -842,8 +844,8 @@ export default function InventoryPage() {
                 label="Jumlah Pengurangan"
                 type="number"
                 min={1}
-                value={modalQuantity || ''}
-                onChange={(e) => setModalQuantity(parseInt(e.target.value) || 0)}
+                value={modalQuantity}
+                onChange={(e) => setModalQuantity(e.target.value)}
                 placeholder="Berapa yang dikurangi?"
               />
 
@@ -899,7 +901,7 @@ export default function InventoryPage() {
                 label="Stok Baru (Sesuaikan ke)"
                 type="number"
                 value={modalQuantity}
-                onChange={(e) => setModalQuantity(parseInt(e.target.value))}
+                onChange={(e) => setModalQuantity(e.target.value)}
                 placeholder="Masukkan jumlah stok yang benar"
               />
 
