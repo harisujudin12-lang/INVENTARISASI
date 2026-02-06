@@ -46,6 +46,7 @@ export interface CreateItemRequest {
   name: string
   stock: number
   threshold?: number
+  isActive?: boolean
 }
 
 export interface UpdateStockRequest {

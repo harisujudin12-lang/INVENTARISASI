@@ -83,6 +83,7 @@ export async function updateItem(
     data: {
       name: input.name,
       threshold: input.threshold,
+      ...(typeof input.isActive === 'boolean' && { isActive: input.isActive }),
     },
   })
 

@@ -381,6 +381,31 @@ export default function InventoryPage() {
     setShowImageModal(true)
   }
 
+  async function handleToggleActive(item: ItemWithStatus) {
+    const action = item.isActive ? 'menonaktifkan' : 'mengaktifkan kembali'
+    if (!confirm(`Apakah Anda yakin ingin ${action} "${item.name}"?${item.isActive ? '\n\nBarang yang dinonaktifkan tidak akan muncul di form request.' : ''}`)) return
+
+    try {
+      const res = await fetchWithAuth(`/api/admin/items/${item.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isActive: !item.isActive }),
+      })
+
+      const json = await res.json()
+
+      if (json.success) {
+        setToast({ message: `Barang berhasil di${item.isActive ? 'nonaktifkan' : 'aktifkan kembali'}`, type: 'success' })
+        fetchItems()
+      } else {
+        setToast({ message: json.error || 'Gagal mengubah status', type: 'error' })
+      }
+    } catch (error) {
+      console.error('Toggle active error:', error)
+      setToast({ message: 'Terjadi kesalahan', type: 'error' })
+    }
+  }
+
   if (loading) {
     return <LoadingSpinner />
   }
@@ -427,7 +452,13 @@ export default function InventoryPage() {
       {/* Cards Grid */}
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {getFilteredItems().map((item) => (
-          <Card key={item.id} className="hover:shadow-lg transition-shadow">
+          <Card key={item.id} className={`hover:shadow-lg transition-shadow ${!item.isActive ? 'opacity-60 ring-2 ring-orange-300' : ''}`}>
+            {/* Inactive badge */}
+            {!item.isActive && (
+              <div className="bg-orange-100 text-orange-700 text-xs font-medium text-center py-1">
+                ⚠️ Nonaktif
+              </div>
+            )}
             {/* Image */}
             <div className="relative h-40 bg-gray-200 overflow-hidden rounded-t-lg">
               {item.imageUrl ? (
@@ -477,7 +508,7 @@ export default function InventoryPage() {
               </div>
 
 
-              {/* Action buttons 4-grid */}
+              {/* Action buttons grid */}
               <div className="grid grid-cols-2 gap-2">
                 <Button
                   onClick={() => openRestockModal(item)}
@@ -502,6 +533,16 @@ export default function InventoryPage() {
                   className="text-xs bg-yellow-500 text-white hover:bg-yellow-600"
                 >
                   Adjustment
+                </Button>
+                <Button
+                  onClick={() => handleToggleActive(item)}
+                  className={`text-xs col-span-2 ${
+                    item.isActive
+                      ? 'bg-orange-500 text-white hover:bg-orange-600'
+                      : 'bg-green-500 text-white hover:bg-green-600'
+                  }`}
+                >
+                  {item.isActive ? '🚫 Nonaktifkan' : '✅ Aktifkan Kembali'}
                 </Button>
               </div>
             </CardHeader>
