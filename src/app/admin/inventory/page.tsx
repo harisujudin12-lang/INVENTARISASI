@@ -784,8 +784,9 @@ export default function InventoryPage() {
               <Input
                 label="Jumlah Restock"
                 type="number"
-                value={modalQuantity}
-                onChange={(e) => setModalQuantity(parseInt(e.target.value))}
+                min={1}
+                value={modalQuantity || ''}
+                onChange={(e) => setModalQuantity(parseInt(e.target.value) || 0)}
                 placeholder="Berapa yang di-restock?"
               />
 
@@ -840,8 +841,9 @@ export default function InventoryPage() {
               <Input
                 label="Jumlah Pengurangan"
                 type="number"
-                value={modalQuantity}
-                onChange={(e) => setModalQuantity(parseInt(e.target.value))}
+                min={1}
+                value={modalQuantity || ''}
+                onChange={(e) => setModalQuantity(parseInt(e.target.value) || 0)}
                 placeholder="Berapa yang dikurangi?"
               />
 
