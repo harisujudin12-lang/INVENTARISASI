@@ -69,8 +69,8 @@ export async function POST(
           { status: 400 }
         )
       }
-      newStock = item.stock + quantity // quantity is already negative
-      qtyChange = quantity
+      newStock = item.stock - quantity // subtract positive quantity
+      qtyChange = -quantity
       historyChangeType = 'REDUCTION'
       historyAction = 'reduction'
     } else if (action === 'adjustment') {

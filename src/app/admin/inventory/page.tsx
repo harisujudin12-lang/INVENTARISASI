@@ -273,7 +273,7 @@ export default function InventoryPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           action: 'reduction',
-          quantity: -qty,
+          quantity: qty,
           reason: modalReason,
           adminId,
         }),
