@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { Button, Input, Select, Card, Toast, LoadingSpinner } from '@/components/ui'
+import { Button, Input, Select, Card, Toast, LoadingSpinner, Modal } from '@/components/ui'
 import { MAX_ITEMS_PER_REQUEST } from '@/lib/constants'
 
 interface FormField {
@@ -46,6 +46,7 @@ export default function RequestPage() {
     { itemId: '', qtyRequested: 1 },
   ])
   const [trackingUrl, setTrackingUrl] = useState<string | null>(null)
+  const [showConfirmModal, setShowConfirmModal] = useState(false)
   
   // Form title
   const [formTitle, setFormTitle] = useState('Request Barang')
@@ -185,6 +186,7 @@ export default function RequestPage() {
 
       if (json.success) {
         setTrackingUrl(json.data.trackingUrl)
+        setShowConfirmModal(true)
         setToast({ message: 'Request berhasil dikirim!', type: 'success' })
       } else {
         setToast({ message: json.error || 'Gagal mengirim request', type: 'error' })
@@ -625,6 +627,63 @@ export default function RequestPage() {
           type={toast.type}
           onClose={() => setToast(null)}
         />
+      )}
+
+      {/* Confirmation Modal */}
+      {showConfirmModal && (
+        <Modal isOpen={true} onClose={() => setShowConfirmModal(false)}>
+          <div className="w-full max-w-sm">
+            <div className="text-center mb-6">
+              <div className="flex justify-center mb-4">
+                <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                  <svg className="w-6 h-6 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                  </svg>
+                </div>
+              </div>
+              <h2 className="text-lg font-semibold text-gray-900 mb-2">Request Berhasil Dikirim</h2>
+              <p className="text-gray-600 mb-4">Terima kasih telah mengirimkan request Anda.</p>
+              
+              {trackingUrl && (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4 text-left">
+                  <p className="text-xs text-gray-600 mb-1">Tracking ID:</p>
+                  <p className="text-sm font-mono font-semibold text-blue-900 break-all">{trackingUrl}</p>
+                </div>
+              )}
+              
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-left">
+                <p className="text-sm text-gray-800">
+                  <span className="font-semibold text-yellow-900">⚠️ Harap Konfirmasi ke Puji/Sterida</span>
+                </p>
+                <p className="text-xs text-gray-600 mt-2">
+                  Silakan hubungi Puji atau Sterida untuk konfirmasi status request Anda.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex gap-2 mt-6">
+              <Button
+                variant="secondary"
+                className="flex-1"
+                onClick={() => setShowConfirmModal(false)}
+              >
+                Tutup
+              </Button>
+              <Button
+                className="flex-1"
+                onClick={() => {
+                  setShowConfirmModal(false)
+                  // Reset form
+                  setFormData({})
+                  setRequestItems([{ itemId: '', qtyRequested: 1 }])
+                  setRequestDate(new Date().toISOString().split('T')[0])
+                }}
+              >
+                Buat Request Baru
+              </Button>
+            </div>
+          </div>
+        </Modal>
       )}
     </div>
   )
