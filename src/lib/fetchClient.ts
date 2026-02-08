@@ -16,9 +16,11 @@ export async function fetchWithAuth(
   const isFormData = options?.body instanceof FormData
   console.log(`[fetchWithAuth] ${url} - FormData: ${isFormData}`)
 
-  const headers: HeadersInit = {
-    ...(token && { 'Authorization': `Bearer ${token}` }),
-    ...options?.headers,
+  const headers: Record<string, string> = {}
+
+  // Add Authorization header if token exists
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`
   }
 
   // Only set Content-Type if NOT FormData
@@ -26,7 +28,15 @@ export async function fetchWithAuth(
     headers['Content-Type'] = 'application/json'
   }
 
+  // Merge with custom headers from options
+  if (options?.headers) {
+    const customHeaders = options.headers as Record<string, string>
+    Object.assign(headers, customHeaders)
+  }
+
   return fetch(url, {
     ...options,
     credentials: 'include',
     headers,
+  })
+}
