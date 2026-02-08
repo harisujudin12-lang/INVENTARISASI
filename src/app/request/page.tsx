@@ -47,6 +47,7 @@ export default function RequestPage() {
   ])
   const [trackingUrl, setTrackingUrl] = useState<string | null>(null)
   const [showConfirmModal, setShowConfirmModal] = useState(false)
+  const [showSuccessPage, setShowSuccessPage] = useState(false)
   
   // Form title
   const [formTitle, setFormTitle] = useState('Request Barang')
@@ -242,7 +243,7 @@ export default function RequestPage() {
   }
 
   // Success state
-  if (trackingUrl) {
+  if (trackingUrl && showSuccessPage) {
     return (
       <div className="min-h-screen bg-gray-50 px-4 py-8">
         <div className="max-w-md mx-auto">
@@ -664,9 +665,12 @@ export default function RequestPage() {
               <Button
                 variant="secondary"
                 className="flex-1"
-                onClick={() => setShowConfirmModal(false)}
+                onClick={() => {
+                  setShowConfirmModal(false)
+                  setShowSuccessPage(true)
+                }}
               >
-                Tutup
+                OK, Lanjutkan
               </Button>
               <Button
                 className="flex-1"
@@ -676,9 +680,10 @@ export default function RequestPage() {
                   setFormData({})
                   setRequestItems([{ itemId: '', qtyRequested: 1 }])
                   setRequestDate(new Date().toISOString().split('T')[0])
+                  setTrackingUrl(null)
                 }}
               >
-                Buat Request Baru
+                Batalkan
               </Button>
             </div>
           </div>
