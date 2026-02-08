@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { revalidatePath, revalidateTag } from 'next/cache';
 import { createClient } from '@supabase/supabase-js';
 import { prisma } from '@/lib/prisma';
 
@@ -89,6 +90,15 @@ export async function POST(
       where: { id: params.id },
       data: { imageUrl: publicUrl }
     });
+
+    // Revalidate public form data and inventory cache
+    await Promise.all([
+      revalidatePath('/admin/inventory'),
+      revalidatePath('/request'),
+      revalidatePath('/track'),
+      revalidateTag('form-data'),
+      revalidateTag('inventory-data'),
+    ]);
 
     return NextResponse.json({
       success: true,
