@@ -1,6 +1,7 @@
 /**
  * Fetch wrapper dengan Authorization header untuk authenticated requests
  * Menggunakan localStorage untuk token storage
+ * Automatically handles Content-Type - skips it for FormData
  */
 export async function fetchWithAuth(
   url: string,
@@ -11,13 +12,21 @@ export async function fetchWithAuth(
   
   console.log(`[fetchWithAuth] ${url} - Token: ${token ? 'YES' : 'NO'}`)
 
+  // Check if body is FormData (don't set Content-Type for FormData, let browser handle it)
+  const isFormData = options?.body instanceof FormData
+  console.log(`[fetchWithAuth] ${url} - FormData: ${isFormData}`)
+
+  const headers: HeadersInit = {
+    ...(token && { 'Authorization': `Bearer ${token}` }),
+    ...options?.headers,
+  }
+
+  // Only set Content-Type if NOT FormData
+  if (!isFormData) {
+    headers['Content-Type'] = 'application/json'
+  }
+
   return fetch(url, {
     ...options,
     credentials: 'include',
-    headers: {
-      'Content-Type': 'application/json',
-      ...(token && { 'Authorization': `Bearer ${token}` }),
-      ...options?.headers,
-    },
-  })
-}
+    headers,
