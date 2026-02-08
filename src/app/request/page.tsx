@@ -630,8 +630,7 @@ export default function RequestPage() {
       )}
 
       {/* Confirmation Modal */}
-      {showConfirmModal && (
-        <Modal isOpen={true} onClose={() => setShowConfirmModal(false)}>
+      <Modal isOpen={showConfirmModal} onClose={() => setShowConfirmModal(false)}>
           <div className="w-full max-w-sm">
             <div className="text-center mb-6">
               <div className="flex justify-center mb-4">
@@ -684,7 +683,6 @@ export default function RequestPage() {
             </div>
           </div>
         </Modal>
-      )}
     </div>
   )
 }
