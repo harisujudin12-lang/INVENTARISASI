@@ -6,10 +6,18 @@ import { prisma } from '@/lib/prisma';
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 const MAX_SIZE = 5 * 1024 * 1024; // 5MB
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL || '',
-  process.env.SUPABASE_SERVICE_ROLE_KEY || ''
-);
+// Check Supabase credentials
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+
+if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
+  console.error('[UPLOAD] ❌ Missing Supabase credentials!', {
+    SUPABASE_URL: !!SUPABASE_URL,
+    SUPABASE_SERVICE_KEY: !!SUPABASE_SERVICE_KEY,
+  });
+}
+
+const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 
 export async function POST(
   request: NextRequest,
@@ -87,7 +95,11 @@ export async function POST(
     if (uploadError) {
       console.error('[UPLOAD] ❌ Supabase upload error:', uploadError);
       return NextResponse.json(
-        { error: 'Upload to storage failed: ' + String(uploadError) },
+        { 
+          error: 'Upload to storage failed',
+          details: String(uploadError),
+          supabaseConfigured: !!(SUPABASE_URL && SUPABASE_SERVICE_KEY),
+        },
         { status: 500 }
       );
     }
@@ -128,7 +140,11 @@ export async function POST(
   } catch (error) {
     console.error('[UPLOAD] ❌ Exception:', error);
     return NextResponse.json(
-      { error: 'Upload failed: ' + String(error) },
+      { 
+        error: 'Upload failed',
+        details: String(error),
+        supabaseConfigured: !!(SUPABASE_URL && SUPABASE_SERVICE_KEY),
+      },
       { status: 500 }
     );
   }
