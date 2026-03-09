@@ -79,7 +79,7 @@ model Request {
   requesterName   String        @map("requester_name")
   divisionId      String        @map("division_id")
   status          RequestStatus @default(PENDING)
-  rejectionReason String?       @map("rejection_reason")
+  rejectionReason String?       @db.Text @map("rejection_reason")
   formData        Json          @map("form_data") // data dari field dinamis
   approvedById    String?       @map("approved_by")
   requestDate     DateTime      @default(now()) @map("request_date")
@@ -125,7 +125,7 @@ model StockHistory {
   changeType String   @map("change_type") // APPROVED, DAMAGED, RESTOCK, REDUCTION, ADJUSTMENT
   action     String?  @default("request") // request, restock, reduction, adjustment
   qtyChange  Int      @map("qty_change") // nilai negatif untuk pengurangan
-  notes      String?
+  notes      String?  @db.Text
   requestId  String?  @map("request_id")
   adminId    String   @map("admin_id")
   createdAt  DateTime @default(now()) @map("created_at")
@@ -142,7 +142,7 @@ model Notification {
   id            String   @id @default(cuid())
   type          String // NEW_REQUEST, STATUS_CHANGED
   title         String
-  message       String
+  message       String   @db.Text
   requestId     String?  @map("request_id")
   adminId       String?  @map("admin_id") // null = untuk user publik
   trackingToken String?  @map("tracking_token") // untuk notifikasi user
@@ -161,7 +161,7 @@ model StockAdjustment {
   itemId     String   @map("item_id")
   stockBefore Int     @map("stock_before")
   stockAfter Int      @map("stock_after")
-  reason     String?  // catatan alasan koreksi
+  reason     String?  @db.Text // catatan alasan koreksi
   adminId    String   @map("admin_id")
   createdAt  DateTime @default(now()) @map("created_at")
 
@@ -182,7 +182,7 @@ model RequestCounter {
 // ==================== SETTINGS ====================
 model Setting {
   key       String   @id
-  value     String
+  value     String   @db.Text
   updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
 
   @@map("settings")
