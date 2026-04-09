@@ -112,7 +112,10 @@ export default function InventoryPage() {
         setToast({ message: 'Ukuran file max 5MB', type: 'error' })
         return
       }
-      if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+      const allowedMime = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp']
+      const ext = file.name.toLowerCase().split('.').pop()
+      const extAllowed = ext === 'jpg' || ext === 'jpeg' || ext === 'png' || ext === 'webp'
+      if (!allowedMime.includes(file.type) && !extAllowed) {
         setToast({ message: 'Format hanya jpg, png, webp', type: 'error' })
         return
       }
@@ -121,6 +124,24 @@ export default function InventoryPage() {
       reader.onload = (e) => setImagePreview(e.target?.result as string)
       reader.readAsDataURL(file)
     }
+  }
+
+  async function uploadItemImage(itemId: string, file: File) {
+    const formData = new FormData()
+    formData.append('file', file)
+
+    const res = await fetchWithAuth(`/api/admin/items/${itemId}/upload-image`, {
+      method: 'POST',
+      body: formData,
+    })
+
+    const json = await res.json()
+
+    if (!res.ok || !json.success) {
+      throw new Error(json.details || json.error || 'Gagal upload foto')
+    }
+
+    return json
   }
 
   async function handleAdd() {
@@ -146,12 +167,16 @@ export default function InventoryPage() {
       if (json.success) {
         // Upload image jika ada
         if (formImage) {
-          const formData = new FormData()
-          formData.append('file', formImage)
-          await fetchWithAuth(`/api/admin/items/${json.data.id}/upload-image`, {
-            method: 'POST',
-            body: formData,
-          })
+          try {
+            await uploadItemImage(json.data.id, formImage)
+          } catch (uploadError) {
+            const message = uploadError instanceof Error ? uploadError.message : 'Gagal upload foto'
+            setToast({ message: `Barang dibuat, tapi upload foto gagal: ${message}`, type: 'error' })
+            setShowAddModal(false)
+            resetForm()
+            fetchItems()
+            return
+          }
         }
 
         setToast({ message: 'Barang berhasil ditambahkan', type: 'success' })
@@ -188,12 +213,16 @@ export default function InventoryPage() {
       if (json.success) {
         // Upload image jika ada
         if (formImage) {
-          const formData = new FormData()
-          formData.append('file', formImage)
-          await fetchWithAuth(`/api/admin/items/${selectedItem.id}/upload-image`, {
-            method: 'POST',
-            body: formData,
-          })
+          try {
+            await uploadItemImage(selectedItem.id, formImage)
+          } catch (uploadError) {
+            const message = uploadError instanceof Error ? uploadError.message : 'Gagal upload foto'
+            setToast({ message: `Data tersimpan, tapi upload foto gagal: ${message}`, type: 'error' })
+            setShowEditModal(false)
+            resetForm()
+            fetchItems()
+            return
+          }
         }
 
         setToast({ message: 'Barang berhasil diperbarui', type: 'success' })
@@ -726,24 +755,15 @@ export default function InventoryPage() {
                 if (!selectedItem) return
                 setProcessing(true)
                 try {
-                  const formData = new FormData()
-                  formData.append('file', formImage)
-                  const res = await fetchWithAuth(`/api/admin/items/${selectedItem.id}/upload-image`, {
-                    method: 'POST',
-                    body: formData,
-                  })
-                  const json = await res.json()
-                  if (json.success) {
-                    setToast({ message: 'Foto berhasil diupload', type: 'success' })
-                    setShowImageModal(false)
-                    resetForm()
-                    fetchItems()
-                  } else {
-                    setToast({ message: json.error || 'Gagal upload foto', type: 'error' })
-                  }
+                  await uploadItemImage(selectedItem.id, formImage)
+                  setToast({ message: 'Foto berhasil diupload', type: 'success' })
+                  setShowImageModal(false)
+                  resetForm()
+                  fetchItems()
                 } catch (error) {
                   console.error('Upload error:', error)
-                  setToast({ message: 'Terjadi kesalahan', type: 'error' })
+                  const message = error instanceof Error ? error.message : 'Terjadi kesalahan'
+                  setToast({ message, type: 'error' })
                 } finally {
                   setProcessing(false)
                 }

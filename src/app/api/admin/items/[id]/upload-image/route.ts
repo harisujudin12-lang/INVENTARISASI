@@ -3,8 +3,16 @@ import { revalidatePath, revalidateTag } from 'next/cache';
 import { createHash } from 'crypto';
 import { prisma } from '@/lib/prisma';
 
-const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+const ALLOWED_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
 const MAX_SIZE = 5 * 1024 * 1024; // 5MB
+
+function getFileExtFromName(name: string): 'jpg' | 'png' | 'webp' | null {
+  const ext = name.toLowerCase().split('.').pop()
+  if (ext === 'jpg' || ext === 'jpeg') return 'jpg'
+  if (ext === 'png') return 'png'
+  if (ext === 'webp') return 'webp'
+  return null
+}
 
 // Check Cloudinary credentials
 const CLOUDINARY_CLOUD_NAME = process.env.CLOUDINARY_CLOUD_NAME || '';
@@ -47,11 +55,14 @@ export async function POST(
       );
     }
 
-    // Validate file type
-    if (!ALLOWED_TYPES.includes(file.type)) {
-      console.log('[UPLOAD] ❌ Invalid file type:', file.type)
+    const extFromName = getFileExtFromName(file.name)
+    const typeAllowed = ALLOWED_TYPES.includes(file.type)
+
+    // Some mobile apps can send empty/odd MIME type even for valid jpg/png files.
+    if (!typeAllowed && !extFromName) {
+      console.log('[UPLOAD] ❌ Invalid file type:', file.type, file.name)
       return NextResponse.json(
-        { error: 'Only jpg, png, webp allowed' },
+        { error: 'Format file harus jpg, png, atau webp' },
         { status: 400 }
       );
     }
@@ -86,8 +97,14 @@ export async function POST(
     console.log('[UPLOAD] Buffer created, size:', buffer.length)
 
     // Generate unique filename
-    const ext = file.type === 'image/jpeg' ? 'jpg' : 
-                file.type === 'image/png' ? 'png' : 'webp';
+    const ext =
+      file.type === 'image/jpeg' || file.type === 'image/jpg'
+        ? 'jpg'
+        : file.type === 'image/png'
+          ? 'png'
+          : file.type === 'image/webp'
+            ? 'webp'
+            : extFromName || 'jpg';
     const publicId = `${params.id}-${Date.now()}`;
     const folder = 'items';
     const timestamp = Math.floor(Date.now() / 1000).toString();
