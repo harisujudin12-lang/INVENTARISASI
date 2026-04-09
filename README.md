@@ -23,6 +23,7 @@ Aplikasi web untuk mengelola request barang dan inventory gudang berbasis Next.j
 - **Framework**: Next.js 14 (App Router)
 - **Database**: PostgreSQL
 - **ORM**: Prisma
+- **Image Storage**: Cloudinary
 - **Styling**: Tailwind CSS
 - **Auth**: JWT (jose library)
 - **Export**: xlsx library
@@ -55,6 +56,9 @@ Edit file `.env` dan isi dengan konfigurasi database:
 ```env
 DATABASE_URL="postgresql://username:password@localhost:5432/inventory_db"
 JWT_SECRET="your-secret-key-min-32-characters-long"
+CLOUDINARY_CLOUD_NAME="your-cloud-name"
+CLOUDINARY_API_KEY="your-api-key"
+CLOUDINARY_API_SECRET="your-api-secret"
 ```
 
 3. Setup database:
@@ -166,6 +170,9 @@ src/
 3. Set environment variables di Vercel:
    - `DATABASE_URL`: Vercel Postgres connection string
    - `JWT_SECRET`: Random secret key
+   - `CLOUDINARY_CLOUD_NAME`: Cloudinary cloud name
+   - `CLOUDINARY_API_KEY`: Cloudinary API key
+   - `CLOUDINARY_API_SECRET`: Cloudinary API secret
 
 4. Deploy!
 

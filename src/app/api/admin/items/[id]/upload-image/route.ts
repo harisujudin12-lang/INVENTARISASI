@@ -1,23 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { revalidatePath, revalidateTag } from 'next/cache';
-import { createClient } from '@supabase/supabase-js';
+import { createHash } from 'crypto';
 import { prisma } from '@/lib/prisma';
 
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 const MAX_SIZE = 5 * 1024 * 1024; // 5MB
 
-// Check Supabase credentials
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
-
-if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
-  console.error('[UPLOAD] ❌ Missing Supabase credentials!', {
-    SUPABASE_URL: !!SUPABASE_URL,
-    SUPABASE_SERVICE_KEY: !!SUPABASE_SERVICE_KEY,
-  });
-}
-
-const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
+// Check Cloudinary credentials
+const CLOUDINARY_CLOUD_NAME = process.env.CLOUDINARY_CLOUD_NAME || '';
+const CLOUDINARY_API_KEY = process.env.CLOUDINARY_API_KEY || '';
+const CLOUDINARY_API_SECRET = process.env.CLOUDINARY_API_SECRET || '';
 
 export async function POST(
   request: NextRequest,
@@ -25,6 +17,21 @@ export async function POST(
 ) {
   try {
     console.log('[UPLOAD] Starting upload for item:', params.id)
+
+    if (!CLOUDINARY_CLOUD_NAME || !CLOUDINARY_API_KEY || !CLOUDINARY_API_SECRET) {
+      console.error('[UPLOAD] ❌ Missing Cloudinary credentials!', {
+        CLOUDINARY_CLOUD_NAME: !!CLOUDINARY_CLOUD_NAME,
+        CLOUDINARY_API_KEY: !!CLOUDINARY_API_KEY,
+        CLOUDINARY_API_SECRET: !!CLOUDINARY_API_SECRET,
+      });
+      return NextResponse.json(
+        {
+          error: 'Cloudinary credentials are not configured',
+          cloudinaryConfigured: false,
+        },
+        { status: 500 }
+      );
+    }
     
     // Get form data
     const formData = await request.formData();
@@ -81,35 +88,45 @@ export async function POST(
     // Generate unique filename
     const ext = file.type === 'image/jpeg' ? 'jpg' : 
                 file.type === 'image/png' ? 'png' : 'webp';
-    const filename = `${params.id}-${Date.now()}.${ext}`;
-    console.log('[UPLOAD] Uploading to Supabase:', filename)
+    const publicId = `${params.id}-${Date.now()}`;
+    const folder = 'items';
+    const timestamp = Math.floor(Date.now() / 1000).toString();
+    const signatureBase = `folder=${folder}&public_id=${publicId}&timestamp=${timestamp}${CLOUDINARY_API_SECRET}`;
+    const signature = createHash('sha1').update(signatureBase).digest('hex');
 
-    // Upload to Supabase Storage
-    const { data, error: uploadError } = await supabase.storage
-      .from('items')
-      .upload(filename, buffer, {
-        contentType: file.type,
-        upsert: false,
-      });
+    const cloudinaryFormData = new FormData();
+    cloudinaryFormData.append('file', new Blob([buffer], { type: file.type }), `${publicId}.${ext}`);
+    cloudinaryFormData.append('api_key', CLOUDINARY_API_KEY);
+    cloudinaryFormData.append('timestamp', timestamp);
+    cloudinaryFormData.append('signature', signature);
+    cloudinaryFormData.append('folder', folder);
+    cloudinaryFormData.append('public_id', publicId);
 
-    if (uploadError) {
-      console.error('[UPLOAD] ❌ Supabase upload error:', uploadError);
+    console.log('[UPLOAD] Uploading to Cloudinary:', `${publicId}.${ext}`)
+
+    const uploadRes = await fetch(
+      `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`,
+      {
+        method: 'POST',
+        body: cloudinaryFormData,
+      }
+    );
+
+    const uploadData = await uploadRes.json();
+
+    if (!uploadRes.ok || !uploadData?.secure_url) {
+      console.error('[UPLOAD] ❌ Cloudinary upload error:', uploadData);
       return NextResponse.json(
         { 
           error: 'Upload to storage failed',
-          details: String(uploadError),
-          supabaseConfigured: !!(SUPABASE_URL && SUPABASE_SERVICE_KEY),
+          details: String(uploadData?.error?.message || 'Unknown Cloudinary error'),
+          cloudinaryConfigured: !!(CLOUDINARY_CLOUD_NAME && CLOUDINARY_API_KEY && CLOUDINARY_API_SECRET),
         },
         { status: 500 }
       );
     }
 
-    console.log('[UPLOAD] ✅ Uploaded to Supabase:', data?.path)
-
-    // Get public URL
-    const { data: { publicUrl } } = supabase.storage
-      .from('items')
-      .getPublicUrl(filename);
+    const publicUrl = String(uploadData.secure_url);
 
     console.log('[UPLOAD] Public URL:', publicUrl)
 
@@ -143,7 +160,7 @@ export async function POST(
       { 
         error: 'Upload failed',
         details: String(error),
-        supabaseConfigured: !!(SUPABASE_URL && SUPABASE_SERVICE_KEY),
+        cloudinaryConfigured: !!(CLOUDINARY_CLOUD_NAME && CLOUDINARY_API_KEY && CLOUDINARY_API_SECRET),
       },
       { status: 500 }
     );

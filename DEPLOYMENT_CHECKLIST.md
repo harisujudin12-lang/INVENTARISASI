@@ -8,11 +8,11 @@
 
 ### Step 3: Create Production User
 - [x] Production user 'prod_user' created
-- [x] Password: Inventaris@2025!
+- [x] Password: [REDACTED - set in secret manager]
 - [x] Permissions granted on inventarisasi database
 
 ### Step 4: Get Public IP
-- [x] Public IP: 182.253.50.219
+- [x] Public IP: [REDACTED]
 - [x] MySQL port 3306 open to internet
 
 ### Step 5: Test Connection
@@ -20,8 +20,8 @@
 
 ### Step 6: Environment Files
 - [x] .env.production created with:
-  - DATABASE_URL=mysql://prod_user:Inventaris@2025!@182.253.50.219:3306/inventarisasi
-  - NEXTAUTH_SECRET=gI7vK2xL9pQ4mB6nR8tW1sY5fJ3dH0cZ7aE2gF9jK4mL5nO8pQ1rS6tV9wX2yZ3aB5c
+  - DATABASE_URL=mysql://<db_user>:<db_password>@<db_host>:3306/<db_name>
+  - NEXTAUTH_SECRET=<strong-random-secret>
   - NEXTAUTH_URL=https://inventarisasi.vercel.app
 
 ### Step 7: Build Test
@@ -61,8 +61,8 @@ git push origin main
 
 ## Database Credentials:
 - User: prod_user
-- Password: Inventaris@2025!
-- Host: 182.253.50.219
+- Password: [REDACTED]
+- Host: [REDACTED]
 - Port: 3306
 - Database: inventarisasi
 
