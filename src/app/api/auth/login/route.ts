@@ -5,6 +5,23 @@ import { createToken, setAuthCookie } from '@/lib/auth'
 
 export const dynamic = 'force-dynamic'
 
+function getLoginErrorMessage(error: unknown): string {
+  const message = error instanceof Error ? error.message : String(error)
+
+  // Prisma/DB connection related failures often surface with these messages.
+  if (
+    message.includes('Tenant or user not found') ||
+    message.includes('Can\'t reach database server') ||
+    message.includes('Authentication failed') ||
+    message.includes('P1000') ||
+    message.includes('P1001')
+  ) {
+    return 'Koneksi database gagal. Periksa DATABASE_URL di environment production.'
+  }
+
+  return 'Terjadi kesalahan server'
+}
+
 export async function POST(request: Request) {
   try {
     const body = await request.json()
@@ -82,9 +99,8 @@ export async function POST(request: Request) {
     })
   } catch (error) {
     console.error('[API /login] ❌ Exception:', error)
-    const errorMessage = error instanceof Error ? error.message : 'Terjadi kesalahan server'
     return NextResponse.json(
-      { success: false, error: `Server error: ${errorMessage}` },
+      { success: false, error: getLoginErrorMessage(error) },
       { status: 500 }
     )
   }

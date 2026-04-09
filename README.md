@@ -176,6 +176,8 @@ src/
 
 4. Deploy!
 
+Jika deploy sukses tapi login error database (`Tenant or user not found`), ikuti panduan di `DEPLOY_DATABASE_FIX.md`.
+
 ## License
 
 MIT License
