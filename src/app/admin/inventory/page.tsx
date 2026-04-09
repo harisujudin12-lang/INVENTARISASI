@@ -51,6 +51,7 @@ export default function InventoryPage() {
   const [formImage, setFormImage] = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState<string>('')
   const [showImageModal, setShowImageModal] = useState(false)
+  const [imageUploadError, setImageUploadError] = useState('')
 
   // Modal form state
   const [modalQuantity, setModalQuantity] = useState('')
@@ -95,6 +96,7 @@ export default function InventoryPage() {
     setSelectedItem(null)
     setModalQuantity('')
     setModalReason('')
+    setImageUploadError('')
   }
 
   function getFilteredItems() {
@@ -120,6 +122,7 @@ export default function InventoryPage() {
         return
       }
       setFormImage(file)
+      setImageUploadError('')
       const reader = new FileReader()
       reader.onload = (e) => setImagePreview(e.target?.result as string)
       reader.readAsDataURL(file)
@@ -409,6 +412,7 @@ export default function InventoryPage() {
 
   function openImageModal(item: ItemWithStatus) {
     setSelectedItem(item)
+    setImageUploadError('')
     setShowImageModal(true)
   }
 
@@ -750,29 +754,38 @@ export default function InventoryPage() {
             )}
           </div>
           {formImage && (
-            <Button
-              onClick={async () => {
-                if (!selectedItem) return
-                setProcessing(true)
-                try {
-                  await uploadItemImage(selectedItem.id, formImage)
-                  setToast({ message: 'Foto berhasil diupload', type: 'success' })
-                  setShowImageModal(false)
-                  resetForm()
-                  fetchItems()
-                } catch (error) {
-                  console.error('Upload error:', error)
-                  const message = error instanceof Error ? error.message : 'Terjadi kesalahan'
-                  setToast({ message, type: 'error' })
-                } finally {
-                  setProcessing(false)
-                }
-              }}
-              disabled={processing}
-              className="w-full bg-blue-600 text-white"
-            >
-              {processing ? 'Uploading...' : 'Upload'}
-            </Button>
+            <>
+              {imageUploadError && (
+                <div className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+                  {imageUploadError}
+                </div>
+              )}
+              <Button
+                onClick={async () => {
+                  if (!selectedItem) return
+                  setProcessing(true)
+                  setImageUploadError('')
+                  try {
+                    await uploadItemImage(selectedItem.id, formImage)
+                    setToast({ message: 'Foto berhasil diupload', type: 'success' })
+                    setShowImageModal(false)
+                    resetForm()
+                    fetchItems()
+                  } catch (error) {
+                    console.error('Upload error:', error)
+                    const message = error instanceof Error ? error.message : 'Terjadi kesalahan'
+                    setImageUploadError(message)
+                    setToast({ message, type: 'error' })
+                  } finally {
+                    setProcessing(false)
+                  }
+                }}
+                disabled={processing}
+                className="w-full bg-blue-600 text-white"
+              >
+                {processing ? 'Uploading...' : 'Upload'}
+              </Button>
+            </>
           )}
           <Button
             onClick={() => {

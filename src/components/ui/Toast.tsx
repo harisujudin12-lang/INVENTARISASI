@@ -54,7 +54,7 @@ export default function Toast({
   return (
     <div
       className={cn(
-        'fixed bottom-4 left-1/2 -translate-x-1/2 z-50 transition-all duration-300',
+        'fixed bottom-4 left-1/2 -translate-x-1/2 z-[80] transition-all duration-300',
         isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'
       )}
     >
