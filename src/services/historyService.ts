@@ -2,27 +2,49 @@ import { prisma } from '@/lib/prisma'
 import { HistoryFilter, StockHistoryData } from '@/types'
 import * as XLSX from 'xlsx'
 
+const EXPORT_LIMIT = 10000
+
+function buildDateRange(filter?: HistoryFilter) {
+  if (!filter?.startDate && !filter?.endDate) {
+    return undefined
+  }
+
+  const range: Record<string, Date> = {}
+
+  if (filter.startDate) {
+    range.gte = new Date(filter.startDate)
+  }
+
+  if (filter.endDate) {
+    range.lte = new Date(filter.endDate)
+  }
+
+  return range
+}
+
+function getPagination(filter?: HistoryFilter) {
+  const page = filter?.page || 1
+  const limit = filter?.limit || 20
+  const skip = (page - 1) * limit
+
+  return { page, limit, skip }
+}
+
 // ==================== GET HISTORY ====================
 export async function getHistory(filter?: HistoryFilter) {
   const where: Record<string, unknown> = {}
 
-  if (filter?.startDate || filter?.endDate) {
-    where.createdAt = {}
-    if (filter.startDate) {
-      (where.createdAt as Record<string, Date>).gte = new Date(filter.startDate)
-    }
-    if (filter.endDate) {
-      (where.createdAt as Record<string, Date>).lte = new Date(filter.endDate)
-    }
+  const dateRange = buildDateRange(filter)
+
+  if (dateRange) {
+    where.createdAt = dateRange
   }
 
   if (filter?.itemId) {
     where.itemId = filter.itemId
   }
 
-  const page = filter?.page || 1
-  const limit = filter?.limit || 20
-  const skip = (page - 1) * limit
+  const { page, limit, skip } = getPagination(filter)
 
   const [history, total] = await Promise.all([
     prisma.stockHistory.findMany({
@@ -63,18 +85,14 @@ export async function getHistory(filter?: HistoryFilter) {
 export async function getRequestHistory(filter?: HistoryFilter) {
   const where: Record<string, unknown> = {}
 
+  const dateRange = buildDateRange(filter)
+
   if (filter?.status) {
     where.status = filter.status
   }
 
-  if (filter?.startDate || filter?.endDate) {
-    where.requestDate = {}
-    if (filter.startDate) {
-      (where.requestDate as Record<string, Date>).gte = new Date(filter.startDate)
-    }
-    if (filter.endDate) {
-      (where.requestDate as Record<string, Date>).lte = new Date(filter.endDate)
-    }
+  if (dateRange) {
+    where.requestDate = dateRange
   }
 
   if (filter?.itemId) {
@@ -83,9 +101,7 @@ export async function getRequestHistory(filter?: HistoryFilter) {
     }
   }
 
-  const page = filter?.page || 1
-  const limit = filter?.limit || 20
-  const skip = (page - 1) * limit
+  const { page, limit, skip } = getPagination(filter)
 
   const [requests, total] = await Promise.all([
     prisma.request.findMany({
@@ -129,7 +145,7 @@ export async function getRequestHistory(filter?: HistoryFilter) {
 
 // ==================== EXPORT TO EXCEL ====================
 export async function exportToExcel(filter?: HistoryFilter) {
-  const { data } = await getRequestHistory({ ...filter, limit: 10000 })
+  const { data } = await getRequestHistory({ ...filter, limit: EXPORT_LIMIT })
 
   const rows = data.flatMap((r) =>
     r.items.map((item) => ({
@@ -159,7 +175,7 @@ export async function exportToExcel(filter?: HistoryFilter) {
 
 // ==================== EXPORT TO CSV ====================
 export async function exportToCSV(filter?: HistoryFilter) {
-  const { data } = await getRequestHistory({ ...filter, limit: 10000 })
+  const { data } = await getRequestHistory({ ...filter, limit: EXPORT_LIMIT })
 
   const headers = [
     'No Request',
@@ -214,14 +230,10 @@ export async function getRestockReductionHistory(filter?: HistoryFilter) {
     ],
   }
 
-  if (filter?.startDate || filter?.endDate) {
-    where.createdAt = {}
-    if (filter.startDate) {
-      (where.createdAt as Record<string, Date>).gte = new Date(filter.startDate)
-    }
-    if (filter.endDate) {
-      (where.createdAt as Record<string, Date>).lte = new Date(filter.endDate)
-    }
+  const dateRange = buildDateRange(filter)
+
+  if (dateRange) {
+    where.createdAt = dateRange
   }
 
   if (filter?.itemId) {
@@ -235,7 +247,7 @@ export async function getRestockReductionHistory(filter?: HistoryFilter) {
       admin: true,
     },
     orderBy: { createdAt: 'desc' },
-    take: 10000,
+    take: EXPORT_LIMIT,
   })
 
   return history.map((h) => ({
@@ -304,14 +316,10 @@ export async function getStockAdjustmentHistory(filter?: HistoryFilter) {
     ],
   }
 
-  if (filter?.startDate || filter?.endDate) {
-    where.createdAt = {}
-    if (filter.startDate) {
-      (where.createdAt as Record<string, Date>).gte = new Date(filter.startDate)
-    }
-    if (filter.endDate) {
-      (where.createdAt as Record<string, Date>).lte = new Date(filter.endDate)
-    }
+  const dateRange = buildDateRange(filter)
+
+  if (dateRange) {
+    where.createdAt = dateRange
   }
 
   if (filter?.itemId) {
@@ -325,7 +333,7 @@ export async function getStockAdjustmentHistory(filter?: HistoryFilter) {
       admin: true,
     },
     orderBy: { createdAt: 'desc' },
-    take: 10000,
+    take: EXPORT_LIMIT,
   })
 
   return history.map((h) => ({

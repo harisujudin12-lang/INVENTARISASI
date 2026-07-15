@@ -11,6 +11,50 @@ import { generateRequestNumber } from '@/lib/utils'
 import { MAX_ITEMS_PER_REQUEST, NOTIFICATION_TYPES, STOCK_CHANGE_TYPES } from '@/lib/constants'
 import { getSettings } from '@/services/settingService'
 
+function mapRequestData(request: {
+  id: string
+  requestNumber: string
+  trackingToken: string
+  requesterName: string
+  divisionId: string
+  division: { name: string }
+  status: RequestStatus
+  rejectionReason: string | null
+  formData: unknown
+  requestDate: Date
+  approvalDate: Date | null
+  approvedBy: { name: string } | null
+  requestItems: Array<{
+    id: string
+    itemId: string
+    item: { name: string }
+    qtyRequested: number
+    qtyApproved: number | null
+  }>
+}): RequestData {
+  return {
+    id: request.id,
+    requestNumber: request.requestNumber,
+    trackingToken: request.trackingToken,
+    requesterName: request.requesterName,
+    divisionId: request.divisionId,
+    divisionName: request.division.name,
+    status: request.status,
+    rejectionReason: request.rejectionReason,
+    formData: request.formData as Record<string, unknown>,
+    requestDate: request.requestDate,
+    approvalDate: request.approvalDate,
+    approvedByName: request.approvedBy?.name || null,
+    items: request.requestItems.map((ri) => ({
+      id: ri.id,
+      itemId: ri.itemId,
+      itemName: ri.item.name,
+      qtyRequested: ri.qtyRequested,
+      qtyApproved: ri.qtyApproved,
+    })),
+  }
+}
+
 // ==================== GET FORM DATA FOR PUBLIC ====================
 export async function getPublicFormData() {
   try {
@@ -163,27 +207,7 @@ export async function getRequestByToken(token: string): Promise<RequestData | nu
 
   if (!request) return null
 
-  return {
-    id: request.id,
-    requestNumber: request.requestNumber,
-    trackingToken: request.trackingToken,
-    requesterName: request.requesterName,
-    divisionId: request.divisionId,
-    divisionName: request.division.name,
-    status: request.status,
-    rejectionReason: request.rejectionReason,
-    formData: request.formData as Record<string, unknown>,
-    requestDate: request.requestDate,
-    approvalDate: request.approvalDate,
-    approvedByName: request.approvedBy?.name || null,
-    items: request.requestItems.map((ri) => ({
-      id: ri.id,
-      itemId: ri.itemId,
-      itemName: ri.item.name,
-      qtyRequested: ri.qtyRequested,
-      qtyApproved: ri.qtyApproved,
-    })),
-  }
+  return mapRequestData(request)
 }
 
 // ==================== UPDATE REQUEST (ONLY PENDING) ====================
@@ -308,27 +332,7 @@ export async function getAllRequests(filter?: HistoryFilter) {
   ])
 
   return {
-    requests: requests.map((r) => ({
-      id: r.id,
-      requestNumber: r.requestNumber,
-      trackingToken: r.trackingToken,
-      requesterName: r.requesterName,
-      divisionId: r.divisionId,
-      divisionName: r.division.name,
-      status: r.status,
-      rejectionReason: r.rejectionReason,
-      formData: r.formData as Record<string, unknown>,
-      requestDate: r.requestDate,
-      approvalDate: r.approvalDate,
-      approvedByName: r.approvedBy?.name || null,
-      items: r.requestItems.map((ri) => ({
-        id: ri.id,
-        itemId: ri.itemId,
-        itemName: ri.item.name,
-        qtyRequested: ri.qtyRequested,
-        qtyApproved: ri.qtyApproved,
-      })),
-    })),
+    requests: requests.map(mapRequestData),
     total,
     page,
     totalPages: Math.ceil(total / limit),
@@ -350,27 +354,7 @@ export async function getRequestById(id: string): Promise<RequestData | null> {
 
   if (!request) return null
 
-  return {
-    id: request.id,
-    requestNumber: request.requestNumber,
-    trackingToken: request.trackingToken,
-    requesterName: request.requesterName,
-    divisionId: request.divisionId,
-    divisionName: request.division.name,
-    status: request.status,
-    rejectionReason: request.rejectionReason,
-    formData: request.formData as Record<string, unknown>,
-    requestDate: request.requestDate,
-    approvalDate: request.approvalDate,
-    approvedByName: request.approvedBy?.name || null,
-    items: request.requestItems.map((ri) => ({
-      id: ri.id,
-      itemId: ri.itemId,
-      itemName: ri.item.name,
-      qtyRequested: ri.qtyRequested,
-      qtyApproved: ri.qtyApproved,
-    })),
-  }
+  return mapRequestData(request)
 }
 
 // ==================== APPROVE REQUEST ====================

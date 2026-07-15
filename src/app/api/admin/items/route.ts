@@ -5,7 +5,7 @@ import { getAllItems, createItem } from '@/services/inventoryService'
 
 export const dynamic = 'force-dynamic'
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
     const admin = await getCurrentAdmin()
 
@@ -16,7 +16,9 @@ export async function GET() {
       )
     }
 
-    const data = await getAllItems()
+    const { searchParams } = new URL(request.url)
+    const includeInactive = searchParams.get('includeInactive') === 'true'
+    const data = await getAllItems(includeInactive)
 
     return NextResponse.json({
       success: true,

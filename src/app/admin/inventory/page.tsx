@@ -27,6 +27,7 @@ export default function InventoryPage() {
   const [loading, setLoading] = useState(true)
   const [showAddModal, setShowAddModal] = useState(false)
   const [showEditModal, setShowEditModal] = useState(false)
+  const [activeTab, setActiveTab] = useState<'active' | 'inactive'>('active')
   const [searchQuery, setSearchQuery] = useState('')
   const [restockModal, setRestockModal] = useState<ModalState>({
     show: false,
@@ -76,7 +77,7 @@ export default function InventoryPage() {
 
   async function fetchItems() {
     try {
-      const res = await fetchWithAuth('/api/admin/items')
+      const res = await fetchWithAuth('/api/admin/items?includeInactive=true')
       const json = await res.json()
       if (json.success) {
         setItems(json.data)
@@ -106,6 +107,11 @@ export default function InventoryPage() {
       item.name.toLowerCase().includes(searchQuery.toLowerCase())
     )
   }
+
+  const filteredItems = getFilteredItems()
+  const activeItems = filteredItems.filter((item) => item.isActive)
+  const inactiveItems = filteredItems.filter((item) => !item.isActive)
+  const visibleItems = activeTab === 'active' ? activeItems : inactiveItems
 
   function handleImageSelect(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
@@ -453,7 +459,9 @@ export default function InventoryPage() {
       <div className="mb-8 flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Inventory</h1>
-          <p className="text-gray-500">Total: {items.length} barang</p>
+          <p className="text-gray-500">
+            Total: {items.length} barang · Aktif: {items.filter((item) => item.isActive).length} · Nonaktif: {items.filter((item) => !item.isActive).length}
+          </p>
         </div>
         <div className="flex gap-3">
           <Button onClick={() => { resetForm(); setShowAddModal(true) }} className="bg-blue-600 text-white">
@@ -468,6 +476,30 @@ export default function InventoryPage() {
         </div>
       </div>
 
+      {/* Tabs */}
+      <div className="mb-6 inline-flex rounded-xl bg-gray-100 p-1">
+        <button
+          onClick={() => setActiveTab('active')}
+          className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
+            activeTab === 'active'
+              ? 'bg-white text-gray-900 shadow'
+              : 'text-gray-500 hover:text-gray-900'
+          }`}
+        >
+          Aktif ({activeItems.length})
+        </button>
+        <button
+          onClick={() => setActiveTab('inactive')}
+          className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
+            activeTab === 'inactive'
+              ? 'bg-white text-gray-900 shadow'
+              : 'text-gray-500 hover:text-gray-900'
+          }`}
+        >
+          Nonaktif ({inactiveItems.length})
+        </button>
+      </div>
+
       {/* Search Bar */}
       <div className="mb-6">
         <input
@@ -479,14 +511,29 @@ export default function InventoryPage() {
         />
         {searchQuery && (
           <p className="text-xs text-gray-500 mt-2">
-            Menampilkan {getFilteredItems().length} dari {items.length} barang
+            Menampilkan {filteredItems.length} dari {items.length} barang
           </p>
         )}
       </div>
 
-      {/* Cards Grid */}
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-        {getFilteredItems().map((item) => (
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="text-lg font-semibold text-gray-900">
+            {activeTab === 'active' ? 'Item Aktif' : 'Item Nonaktif'}
+          </h2>
+          <span className="text-sm text-gray-500">
+            {visibleItems.length} item
+          </span>
+        </div>
+
+        {visibleItems.length === 0 ? (
+          <div className="rounded-lg border border-dashed border-gray-300 bg-gray-50 p-6 text-sm text-gray-500">
+            {activeTab === 'active'
+              ? 'Tidak ada item aktif.'
+              : 'Tidak ada item nonaktif.'}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {visibleItems.map((item) => (
           <Card key={item.id} className={`hover:shadow-lg transition-shadow ${!item.isActive ? 'opacity-60 ring-2 ring-orange-300' : ''}`}>
             {/* Inactive badge */}
             {!item.isActive && (
@@ -582,8 +629,9 @@ export default function InventoryPage() {
               </div>
             </CardHeader>
           </Card>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
 
       {/* Add Item Modal */}
       <Modal

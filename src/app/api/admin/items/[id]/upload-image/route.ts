@@ -5,13 +5,25 @@ import { prisma } from '@/lib/prisma';
 
 const ALLOWED_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
 const MAX_SIZE = 5 * 1024 * 1024; // 5MB
+const CLOUDINARY_UPLOAD_URL = (cloudName: string) => `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`;
 
 function getFileExtFromName(name: string): 'jpg' | 'png' | 'webp' | null {
-  const ext = name.toLowerCase().split('.').pop()
-  if (ext === 'jpg' || ext === 'jpeg') return 'jpg'
-  if (ext === 'png') return 'png'
-  if (ext === 'webp') return 'webp'
-  return null
+  const ext = name.toLowerCase().split('.').pop();
+  if (ext === 'jpg' || ext === 'jpeg') return 'jpg';
+  if (ext === 'png') return 'png';
+  if (ext === 'webp') return 'webp';
+  return null;
+}
+
+function getNormalizedFileExt(file: File, fallbackName: string): 'jpg' | 'png' | 'webp' {
+  if (file.type === 'image/jpeg' || file.type === 'image/jpg') return 'jpg';
+  if (file.type === 'image/png') return 'png';
+  if (file.type === 'image/webp') return 'webp';
+  return getFileExtFromName(fallbackName) || 'jpg';
+}
+
+function isAllowedImage(file: File): boolean {
+  return ALLOWED_TYPES.includes(file.type) || !!getFileExtFromName(file.name);
 }
 
 // Check Cloudinary credentials
@@ -55,11 +67,8 @@ export async function POST(
       );
     }
 
-    const extFromName = getFileExtFromName(file.name)
-    const typeAllowed = ALLOWED_TYPES.includes(file.type)
-
     // Some mobile apps can send empty/odd MIME type even for valid jpg/png files.
-    if (!typeAllowed && !extFromName) {
+    if (!isAllowedImage(file)) {
       console.log('[UPLOAD] ❌ Invalid file type:', file.type, file.name)
       return NextResponse.json(
         { error: 'Format file harus jpg, png, atau webp' },
@@ -97,14 +106,7 @@ export async function POST(
     console.log('[UPLOAD] Buffer created, size:', buffer.length)
 
     // Generate unique filename
-    const ext =
-      file.type === 'image/jpeg' || file.type === 'image/jpg'
-        ? 'jpg'
-        : file.type === 'image/png'
-          ? 'png'
-          : file.type === 'image/webp'
-            ? 'webp'
-            : extFromName || 'jpg';
+    const ext = getNormalizedFileExt(file, file.name);
     const publicId = `${params.id}-${Date.now()}`;
     const folder = 'items';
     const timestamp = Math.floor(Date.now() / 1000).toString();
@@ -122,7 +124,7 @@ export async function POST(
     console.log('[UPLOAD] Uploading to Cloudinary:', `${publicId}.${ext}`)
 
     const uploadRes = await fetch(
-      `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`,
+      CLOUDINARY_UPLOAD_URL(CLOUDINARY_CLOUD_NAME),
       {
         method: 'POST',
         body: cloudinaryFormData,

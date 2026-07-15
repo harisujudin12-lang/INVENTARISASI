@@ -2,17 +2,31 @@ import { prisma } from '@/lib/prisma'
 import { CreateItemRequest, DamagedItemRequest, ItemWithStatus } from '@/types'
 import { STOCK_CHANGE_TYPES } from '@/lib/constants'
 
+function addLowStockStatus(item: Awaited<ReturnType<typeof prisma.item.findUnique>> extends infer T ? NonNullable<T> : never) {
+  return {
+    ...item,
+    isLowStock: item.stock <= item.threshold,
+  }
+}
+
 // ==================== GET ALL ITEMS ====================
-export async function getAllItems(): Promise<ItemWithStatus[]> {
+export async function getAllItems(includeInactive = false): Promise<ItemWithStatus[]> {
   const items = await prisma.item.findMany({
-    where: { isActive: true },
+    where: includeInactive ? undefined : { isActive: true },
     orderBy: { name: 'asc' },
   })
 
-  return items.map((item) => ({
-    ...item,
-    isLowStock: item.stock <= item.threshold,
-  }))
+  return items.map(addLowStockStatus)
+}
+
+// ==================== GET INACTIVE ITEMS ====================
+export async function getInactiveItems(): Promise<ItemWithStatus[]> {
+  const items = await prisma.item.findMany({
+    where: { isActive: false },
+    orderBy: { name: 'asc' },
+  })
+
+  return items.map(addLowStockStatus)
 }
 
 // ==================== GET ITEM BY ID ====================
@@ -23,10 +37,7 @@ export async function getItemById(id: string) {
 
   if (!item) return null
 
-  return {
-    ...item,
-    isLowStock: item.stock <= item.threshold,
-  }
+  return addLowStockStatus(item)
 }
 
 // ==================== CREATE ITEM ====================
@@ -196,16 +207,6 @@ export async function deleteItem(id: string) {
 
 // ==================== GET LOW STOCK ITEMS ====================
 export async function getLowStockItems(): Promise<ItemWithStatus[]> {
-  const items = await prisma.item.findMany({
-    where: {
-      isActive: true,
-      stock: {
-        lte: prisma.item.fields.threshold,
-      },
-    },
-    orderBy: { stock: 'asc' },
-  })
-
   // Workaround karena Prisma tidak support field comparison langsung
   const allItems = await prisma.item.findMany({
     where: { isActive: true },
@@ -214,10 +215,7 @@ export async function getLowStockItems(): Promise<ItemWithStatus[]> {
 
   return allItems
     .filter((item) => item.stock <= item.threshold)
-    .map((item) => ({
-      ...item,
-      isLowStock: true,
-    }))
+    .map(addLowStockStatus)
 }
 
 // ==================== GET TOTAL STOCK ====================
